@@ -12,7 +12,7 @@ app.use(cors());
 
 
 
-
+const router=require('./Routes/route')
 app.use("/routes",router);
 app.listen(port,()=>{
      console.log(`successfully connected at ${port}`);
