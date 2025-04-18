@@ -1,6 +1,8 @@
 const express=require("express");
 const cors=require("cors");
 const db=require("./db/db");
+const mongoose=require('mongoose');
+const issueRoutes=require('../backend/Routes/route');
 require('dotenv').config();
 const port=3551;
 const app=express();
