@@ -28,5 +28,21 @@ router.post('/create',async(req,res)=>{
     }
 })
 
+router.put('/updated issues/:id',async(req,res)=>{
+    try{
+        const updatedIssue=await Issue(req.params.id,{title,description,dueDate,priority},{new:true});
+        if(!updatedIssue){
+            res.status(404).json({message:"Issue not found"})
+        }
+
+        else{
+            res.status(200).json({ message: "Issue updated successfully", updatedIssue });
+        }
+    }
+    catch(e){
+        console.log(e);
+    }
+})
+
 
 module.exports=router;
