@@ -22,5 +22,5 @@ app.use("/auth", authRouter);
 app.use("/routes", router);
 
 app.listen(port, () => {
-    console.log(`successfully connected at ${port}`);
+    console.log(`successfully connected at port ${port}`);
 });
