@@ -28,9 +28,9 @@ router.post('/create',async(req,res)=>{
     }
 })
 
-router.put('/updated issues/:id',async(req,res)=>{
+router.put('/updatedIssues/:id',async(req,res)=>{
     try{
-        const updatedIssue=await Issue(req.params.id,{title,description,dueDate,priority},{new:true});
+        const updatedIssue=await Issue.findByIdAndUpdate(req.params.id,{title,description,dueDate,priority},{new:true});
         if(!updatedIssue){
             res.status(404).json({message:"Issue not found"})
         }
@@ -38,6 +38,22 @@ router.put('/updated issues/:id',async(req,res)=>{
         else{
             res.status(200).json({ message: "Issue updated successfully", updatedIssue });
         }
+    }
+    catch(e){
+        console.log(e);
+    }
+})
+
+router.delete('/deletedIssues/:id',async(req,res)=>{
+    try{
+        const deletedIssue=await Issue.findByIdAndDelete(req.params.id);
+        if(!deletedUser){
+            res.status(404).json({message:"Issue not found"})
+        }
+        else{
+            res.status(200).json({message:"Issue deleted successfully",deletedIssue});
+        }
+
     }
     catch(e){
         console.log(e);
