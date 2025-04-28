@@ -1,6 +1,7 @@
 const express = require('express');
 const User = require('../models/UserSchema');
 const authRouter = express.Router();
+xyz
 
 // Signup route
 authRouter.post('/signup', async (req, res) => {
