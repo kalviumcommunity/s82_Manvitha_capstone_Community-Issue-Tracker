@@ -1,7 +1,7 @@
 const express = require('express');
 const User = require('../models/UserSchema');
 const authRouter = express.Router();
-xyz
+const jwt=require('jsonwebtoken');
 
 // Signup route
 authRouter.post('/signup', async (req, res) => {
@@ -38,6 +38,7 @@ authRouter.get('/getusers', async (req, res) => {
 
 authRouter.put('/:id',async(req,res)=>{
     try{
+        const {mail,password}=req.body;
         const updatedUser=await User.findByIdAndUpdate(req.params.id,{mail,password},{new:true});
         if(!updatedUser){
             return res.status(404).json({message:"user not found"});
