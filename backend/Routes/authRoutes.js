@@ -1,67 +1,98 @@
 const express = require('express');
 const User = require('../models/UserSchema');
+const jwt = require('jsonwebtoken');
+const authenticateToken = require('../middleware/authenticateToken');
+
 const authRouter = express.Router();
-const jwt=require('jsonwebtoken');
 
-// Signup route
+// Generate Token
+const generateToken = (userId) => {
+  return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
+};
+
+// Signup Route
 authRouter.post('/signup', async (req, res) => {
-    try {
-        const { mail, password } = req.body;
+  try {
+    const { mail, password } = req.body;
 
-        if (!mail || !password) {
-            return res.status(400).json({ message: "All fields are required" });
-        }
-       const userExists = await User.findOne({ mail });
-
-        if (userExists) {
-            return res.status(400).json({ message: "User already exists" });
-        }
-         const newUser = new User({ mail, password });
-        await newUser.save();
-          res.status(201).json({ message: "Signup Successful" });
-
-    } catch (e) {
-        console.error(e)
-        res.status(500).json({ message: "Something went wrong", error: e.message });
+    if (!mail || !password) {
+      return res.status(400).json({ message: "All fields are required" });
     }
+
+    const userExists = await User.findOne({ mail });
+    if (userExists) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+
+    const newUser = new User({ mail, password });
+    await newUser.save();
+
+    const token = generateToken(newUser._id);
+    res.status(201).json({ message: "Signup Successful", token });
+
+  } catch (e) {
+    res.status(500).json({ message: "Something went wrong", error: e.message });
+  }
 });
 
+// Login Route
+authRouter.post('/login', async (req, res) => {
+  try {
+    const { mail, password } = req.body;
 
-authRouter.get('/getusers', async (req, res) => {
-    try {
-        const users = await User.find(); 
-        res.status(200).json(users);     
-    } catch (e) {
-        console.error(e);    
+    const user = await User.findOne({ mail });
+    if (!user || user.password !== password) {
+      return res.status(401).json({ message: "Invalid credentials" });
     }
+
+    const token = generateToken(user._id);
+    res.status(200).json({ message: "Login successful", token });
+
+  } catch (e) {
+    res.status(500).json({ message: "Login failed", error: e.message });
+  }
 });
 
-authRouter.put('/:id',async(req,res)=>{
-    try{
-        const {mail,password}=req.body;
-        const updatedUser=await User.findByIdAndUpdate(req.params.id,{mail,password},{new:true});
-        if(!updatedUser){
-            return res.status(404).json({message:"user not found"});
-        }
-        res.status(200).json({ message: "User updated successfully", updatedUser });
-    }
-    catch(e){
-        console.log(e);
-    }
-})
+// Protected: Get All Users
+authRouter.get('/getusers', authenticateToken, async (req, res) => {
+  try {
+    const users = await User.find(); 
+    res.status(200).json(users);     
+  } catch (e) {
+    res.status(500).json({ message: "Failed to fetch users", error: e.message });
+  }
+});
 
-authRouter.delete('/deleteUser/:id',async(req,res)=>{
-    try{
-       const deleteUser=await User.findByIdAndDelete(req.params.id);
-       if(!deleteUser){
-        return res.status(404).json({message:"User not found"});
-       }
-       res.status(200).json({message:"User deleted successfully",deleteUser});
-    }
-    catch(e){
-        console.log(e);
-    }
-})
+// Update User
+authRouter.put('/:id', authenticateToken, async (req, res) => {
+  try {
+    const { mail, password } = req.body;
+    const updatedUser = await User.findByIdAndUpdate(req.params.id, { mail, password }, { new: true });
 
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ message: "User updated successfully", updatedUser });
+
+  } catch (e) {
+    res.status(500).json({ message: "Update failed", error: e.message });
+  }
+});
+
+// Delete User
+authRouter.delete('/deleteUser/:id', authenticateToken, async (req, res) => {
+  try {
+    const deletedUser = await User.findByIdAndDelete(req.params.id);
+    if (!deletedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ message: "User deleted successfully", deletedUser });
+
+  } catch (e) {
+    res.status(500).json({ message: "Delete failed", error: e.message });
+  }
+});
 
 module.exports = authRouter;
