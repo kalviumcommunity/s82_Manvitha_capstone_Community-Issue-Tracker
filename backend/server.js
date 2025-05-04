@@ -21,6 +21,11 @@ db();
 app.use("/auth", authRouter);
 app.use("/routes", router);
 
+const authMiddleware = require('./middleware/authMiddleWare'); 
+
+app.use('/api/tickets', authMiddleware, ticketRoutes);
+
+
 app.listen(port, () => {
     console.log(`successfully connected at port ${port}`);
 });
