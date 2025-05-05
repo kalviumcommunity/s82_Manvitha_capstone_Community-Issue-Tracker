@@ -1,11 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const Issue = require('../models/IssueSchema');
+const User=require('../models/UserSchema');
+const authenticateToken=require('../middleware/authMiddleWare');
 
 // GET all issues
 router.get('/getissues', async (req, res) => {
   try {
-    const problems = await Issue.find();
+    const problems = await Issue.find().populate('user','mail');
     res.status(200).json(problems);
   } catch (e) {
     console.error('Error fetching issues:', e);
@@ -14,7 +16,7 @@ router.get('/getissues', async (req, res) => {
 });
 
 // CREATE new issue
-router.post('/create', async (req, res) => {
+router.post('/create',authenticateToken, async (req, res) => {
   const { title, description, dueDate, priority } = req.body;
 
   if (!title || !description || !dueDate || !priority) {
@@ -22,8 +24,9 @@ router.post('/create', async (req, res) => {
   }
 
   try {
-    const newIssue = new Issue({ title, description, dueDate, priority });
+    const newIssue = new Issue({ title, description, dueDate, priority,user:req.user.id });
     const savedIssue = await newIssue.save();
+    
     res.status(201).json({ message: "Issue created successfully", savedIssue });
   } catch (e) {
     console.error('Error creating issue:', e);
