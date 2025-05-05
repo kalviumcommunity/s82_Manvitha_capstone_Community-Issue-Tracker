@@ -1,31 +1,28 @@
 const express = require("express");
 const cors = require("cors");
-const mongoose = require('mongoose');
-require('dotenv').config();
-const db = require("./db/db");
+const mongoose = require("mongoose");
+require("dotenv").config();
 
-const router = require('./Routes/route');
-const authRouter = require('./Routes/authRoutes');
+const db = require("./db/db");
+const issueRoutes = require("./Routes/route");
+const authRouter = require("./Routes/authRoutes");
+const authenticateToken = require("./middleware/authenticateToken");
 
 const app = express();
 const port = 3551;
 
-// MIDDLEWARE — must come first!
+// MIDDLEWARE
 app.use(cors());
-app.use(express.json()); 
+app.use(express.json());
 
-// Connect to DB
+// DATABASE CONNECTION
 db();
 
 // ROUTES
-app.use("/auth", authRouter);
-app.use("/routes", router);
+app.use("/auth", authRouter); // signup, login, etc.
+app.use("/api/issues", authenticateToken, issueRoutes); // protected issues route
 
-const authMiddleware = require('./middleware/authMiddleWare'); 
-
-app.use('/api/tickets', authMiddleware, ticketRoutes);
-
-
+// START SERVER
 app.listen(port, () => {
-    console.log(`successfully connected at port ${port}`);
+  console.log(`Successfully connected at port ${port}`);
 });
