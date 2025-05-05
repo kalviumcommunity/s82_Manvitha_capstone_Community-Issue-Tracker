@@ -8,6 +8,7 @@ router.get('/getissues', async (req, res) => {
     const problems = await Issue.find();
     res.status(200).json(problems);
   } catch (e) {
+    console.error('Error fetching issues:', e);
     res.status(500).json({ message: "Failed to fetch issues", error: e.message });
   }
 });
@@ -25,6 +26,7 @@ router.post('/create', async (req, res) => {
     const savedIssue = await newIssue.save();
     res.status(201).json({ message: "Issue created successfully", savedIssue });
   } catch (e) {
+    console.error('Error creating issue:', e);
     res.status(500).json({ message: "Failed to create issue", error: e.message });
   }
 });
@@ -46,6 +48,7 @@ router.put('/updatedIssues/:id', async (req, res) => {
 
     res.status(200).json({ message: "Issue updated successfully", updatedIssue });
   } catch (e) {
+    console.error('Error updating issue:', e);
     res.status(500).json({ message: "Update failed", error: e.message });
   }
 });
@@ -61,6 +64,7 @@ router.delete('/deletedIssues/:id', async (req, res) => {
 
     res.status(200).json({ message: "Issue deleted successfully", deletedIssue });
   } catch (e) {
+    console.error('Error deleting issue:', e);
     res.status(500).json({ message: "Delete failed", error: e.message });
   }
 });
