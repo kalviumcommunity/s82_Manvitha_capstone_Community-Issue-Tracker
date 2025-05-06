@@ -13,6 +13,10 @@ import Analytics from './pages/president/analytics';
 import Announcements from './pages/president/announcements';
 import NewTicket from './pages/resident/newTicket';
 import MyTickets from './pages/resident/myTicket';
+import RoleRedirect from './components/RoleRedirect';
+import Login from './pages/login/login';
+import Signup from './pages/signup/signup';
+
 
 function App() {
   return (
@@ -26,7 +30,7 @@ function App() {
                 <Navbar />
                 <main>
                   <Routes>
-                    <Route path="/" element={<Navigate to="/president" replace />} />
+                    <Route path="/" element={<RoleRedirect />} />
                     <Route path="/president" element={<PresidentDashboard />} />
                     <Route path="/president/analytics" element={<Analytics />} />
                     <Route path="/president/announcements" element={<Announcements />} />
@@ -34,6 +38,8 @@ function App() {
                     <Route path="/resident" element={<ResidentDashboard />} />
                     <Route path="/resident/new-ticket" element={<NewTicket />} />
                     <Route path="/resident/my-tickets" element={<MyTickets />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/signup" element={<Signup />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
                 </main>

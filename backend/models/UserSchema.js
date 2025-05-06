@@ -1,15 +1,15 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-  mail: {
+  phoneNumber: {
     type: String,
-    required: [true, "Email is required"],
+    required: true,
     unique: true,
-    lowercase: true,
-    match: [/\S+@\S+\.\S+/, 'Please use a valid email address']
+    match: /^[0-9]{10}$/
   },
   password: {
     type: String,
+
     required: [true, "Password is required"]
   },
   role: {
@@ -24,6 +24,7 @@ const userSchema = new mongoose.Schema({
       ref: 'Issue'
     }
   ]
+master
 });
 
 module.exports = mongoose.model('User', userSchema);
