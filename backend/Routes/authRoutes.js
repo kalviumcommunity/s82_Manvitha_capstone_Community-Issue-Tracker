@@ -2,7 +2,7 @@ const express = require('express');
 const User = require('../models/UserSchema');
 const jwt = require('jsonwebtoken');
 const bcrypt=require('bcrypt');
-const authenticateToken = require('../middleware/authenticateToken');
+const authenticateToken = require('../middleware/authMiddleWare');
 
 const authRouter = express.Router();
 
@@ -14,7 +14,7 @@ const generateToken = (userId) => {
 // Signup Route
 authRouter.post('/signup', async (req, res) => {
   try {
-    const { mail, password } = req.body;
+    const { mail, password,role } = req.body;
 
     if (!mail || !password) {
       return res.status(400).json({ message: "All fields are required" });
@@ -26,7 +26,7 @@ authRouter.post('/signup', async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ mail, password,hashedPassword });
+    const newUser = new User({ mail, password:hashedPassword,role });
     await newUser.save();
 
     const token = generateToken(newUser._id);
