@@ -1,27 +1,22 @@
 const mongoose = require('mongoose');
 
 const issueSchema = new mongoose.Schema({
-  title: {
+  title: String,
+  description: String,
+  dueDate: Date,
+  status: {
     type: String,
-    required: true
+    enum: ['open', 'in progress', 'resolved'],
+    default: 'open'
   },
-  description: {
-    type: String,
-    required: true
-  },
-  dueDate: {
-    type: String,
-    required: true
-  },
-  priority: {
-    type: String,
-    enum: ['Urgent', 'Can be done slowly'],
-    required: true
-  },
-  
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
   }
 });
 
