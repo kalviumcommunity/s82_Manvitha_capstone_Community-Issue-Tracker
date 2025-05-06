@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { PlusCircle, ArrowLeft } from 'lucide-react';
 import TicketCard from '../../components/tickets/TicketCard';
 import TicketFilter from '../../components/tickets/TicketFilter';
-import { Ticket, TicketCategory, TicketPriority, TicketStatus } from '../../types';
+
 import { mockTickets } from '../../data/mockData';
 import { useAuth } from '../../contexts/AuthContext';
 
