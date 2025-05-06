@@ -11,7 +11,19 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: [true, "Password is required"]
-  }
+  },
+  role: {
+    type: String,
+    enum: ['president', 'vice-president', 'resident'],
+    default: 'resident',
+    required: true
+  },
+  issues: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Issue'
+    }
+  ]
 });
 
 module.exports = mongoose.model('User', userSchema);
