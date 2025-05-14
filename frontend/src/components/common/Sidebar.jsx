@@ -119,25 +119,7 @@ const Sidebar = () => {
             ))}
           </nav>
 
-          <div className="p-3 border-t border-gray-200 dark:border-gray-700">
-            <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">Demo: Switch Role</div>
-            <div className="flex flex-wrap gap-2">
-              {['president', 'vice-president', 'resident'].map(role => (
-                <button
-                  key={role}
-                  onClick={() => switchRole(role)}
-                  className={`px-2 py-1 text-xs rounded ${
-                    user.role === role
-                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
-                      : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
-                  }`}
-                >
-                  {role.charAt(0).toUpperCase() + role.slice(1)}
-                </button>
-              ))}
-            </div>
-          </div>
-
+         
           <div className="p-4 border-t border-gray-200 dark:border-gray-700">
             <button 
               onClick={logout}

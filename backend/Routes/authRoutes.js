@@ -1,21 +1,22 @@
 const express = require('express');
 const User = require('../models/UserSchema');
 const jwt = require('jsonwebtoken');
-const authenticateToken = require('../middleware/authenticateToken');
+const bcrypt = require('bcrypt');
+const authenticateToken = require('../middleware/authMiddleWare');
 
 const authRouter = express.Router();
 
 // Generate JWT token
-const generateToken = (userId) => {
-  return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
+const generateToken = (userId, role) => {
+  return jwt.sign({ id: userId, role }, process.env.JWT_SECRET, { expiresIn: '7d' });
 };
 
 // Signup Route
 authRouter.post('/signup', async (req, res) => {
   try {
-    const { mail, password } = req.body;
+    const { mail, password, role } = req.body;
 
-    if (!mail || !password) {
+    if (!mail || !password || !role) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -24,11 +25,13 @@ authRouter.post('/signup', async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    const newUser = new User({ mail, password });
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newUser = new User({ mail, password: hashedPassword, role });
     await newUser.save();
 
-    const token = generateToken(newUser._id);
-    res.status(201).json({ message: "Signup successful", token });
+    const token = generateToken(newUser._id, newUser.role);
+    res.status(201).json({ message: "Signup successful", token, role: newUser.role });
 
   } catch (e) {
     console.error("Signup Error:", e);
@@ -42,12 +45,17 @@ authRouter.post('/login', async (req, res) => {
     const { mail, password } = req.body;
 
     const user = await User.findOne({ mail });
-    if (!user || user.password !== password) {
+    if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const token = generateToken(user._id);
-    res.status(200).json({ message: "Login successful", token });
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    const token = generateToken(user._id,user.role);
+    res.status(200).json({ message: "Login successful", token, role: user.role });
 
   } catch (e) {
     console.error("Login Error:", e);

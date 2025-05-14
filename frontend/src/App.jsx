@@ -31,11 +31,11 @@ function App() {
                 <main>
                   <Routes>
                     <Route path="/" element={<RoleRedirect />} />
-                    <Route path="/president" element={<PresidentDashboard />} />
+                    <Route path="/president/dashboard" element={<PresidentDashboard />} />
                     <Route path="/president/analytics" element={<Analytics />} />
                     <Route path="/president/announcements" element={<Announcements />} />
-                    <Route path="/vice-president" element={<VicePresidentDashboard />} />
-                    <Route path="/resident" element={<ResidentDashboard />} />
+                    <Route path="/vice-president/dashboard" element={<VicePresidentDashboard />} />
+                    <Route path="/resident/dashboard" element={<ResidentDashboard />} />
                     <Route path="/resident/new-ticket" element={<NewTicket />} />
                     <Route path="/resident/my-tickets" element={<MyTickets />} />
                     <Route path="/login" element={<Login />} />

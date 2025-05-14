@@ -6,7 +6,7 @@ require("dotenv").config();
 const db = require("./db/db");
 const issueRoutes = require("./Routes/route");
 const authRouter = require("./Routes/authRoutes");
-const authenticateToken = require("./middleware/authenticateToken");
+const authenticateToken = require("./middleware/authMiddleWare");
 
 const app = express();
 const port = 3551;
