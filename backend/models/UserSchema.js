@@ -1,11 +1,12 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-  phoneNumber: {
+  mail: {
     type: String,
     required: true,
     unique: true,
-    match: /^[0-9]{10}$/
+    lowercase: true,
+    match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   },
   password: {
     type: String,
@@ -14,7 +15,9 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
+
     enum: ['president', 'vice-president', 'resident'],
+
     default: 'resident',
     required: true
   },

@@ -14,9 +14,25 @@ const Login = () => {
         mail,
         password,
       });
+
       alert("Login successful");
+
+      // Store token and role in localStorage
       localStorage.setItem("token", res.data.token);
-      navigate("/");
+      localStorage.setItem("role", res.data.role);
+
+      // Check the stored role and navigate accordingly
+      const role = res.data.role || localStorage.getItem("role");
+      if (role === "president") {
+        navigate("/president/dashboard");
+      } else if (role === "vice-president") {
+        navigate("/vice-president/dashboard");
+      } else if (role === "resident") {
+        navigate("/resident/dashboard");
+      } else {
+        alert("Role not recognized");
+        navigate("/login"); // or redirect to a default page
+      }
     } catch (err) {
       alert(err.response?.data?.message || "Login failed");
     }
@@ -25,7 +41,9 @@ const Login = () => {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
       <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-md w-full max-w-md">
-        <h2 className="text-2xl font-bold text-center text-gray-900 dark:text-white mb-6">Login</h2>
+        <h2 className="text-2xl font-bold text-center text-gray-900 dark:text-white mb-6">
+          Login
+        </h2>
         <form onSubmit={handleLogin} className="space-y-4">
           <input
             type="email"
@@ -52,7 +70,10 @@ const Login = () => {
         </form>
         <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-300">
           Don't have an account?{" "}
-          <Link to="/signup" className="text-blue-600 hover:underline dark:text-blue-400">
+          <Link
+            to="/signup"
+            className="text-blue-600 hover:underline dark:text-blue-400"
+          >
             Sign up
           </Link>
         </p>

@@ -1,22 +1,28 @@
 const express = require('express');
 const User = require('../models/UserSchema');
 const jwt = require('jsonwebtoken');
-const bcrypt=require('bcrypt');
+
+
+const bcrypt = require('bcrypt');
+
 const authenticateToken = require('../middleware/authMiddleWare');
 
 const authRouter = express.Router();
 
-// Generate Token
-const generateToken = (userId) => {
-  return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
-};
+
+// Generate JWT token
+const generateToken = (userId, role) => {
+  return jwt.sign({ id: userId, role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+
 
 // Signup Route
 authRouter.post('/signup', async (req, res) => {
   try {
-    const { mail, password,role } = req.body;
 
-    if (!mail || !password) {
+    const { mail, password, role } = req.body;
+
+
+    if (!mail || !password || !role) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -26,11 +32,14 @@ authRouter.post('/signup', async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ mail, password:hashedPassword,role });
+
+
+    const newUser = new User({ mail, password: hashedPassword, role });
     await newUser.save();
 
-    const token = generateToken(newUser._id);
-    res.status(201).json({ message: "Signup Successful", token });
+    const token = generateToken(newUser._id, newUser.role);
+    res.status(201).json({ message: "Signup successful", token, role: newUser.role });
+
 
   } catch (e) {
     res.status(500).json({ message: "Something went wrong", error: e.message });
@@ -51,8 +60,8 @@ authRouter.post('/login', async (req, res) => {
       return res.status(401).json({message:"Invalid Credantials"});
     }
 
-    const token = generateToken(user._id);
-    res.status(200).json({ message: "Login successful", token });
+    const token = generateToken(user._id,user.role);
+    res.status(200).json({ message: "Login successful", token, role: user.role });
 
   } catch (e) {
     res.status(500).json({ message: "Login failed", error: e.message });
