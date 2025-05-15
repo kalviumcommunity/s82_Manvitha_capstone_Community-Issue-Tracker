@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const Issue = require('../models/IssueSchema');
-const User=require('../models/UserSchema');
-const authenticateToken=require('../middleware/authMiddleWare');
+const User = require('../models/UserSchema');
+const authenticateToken = require('../middleware/authMiddleWare');
 
 // GET all issues
 router.get('/getissues', async (req, res) => {
   try {
-    const problems = await Issue.find().populate('user','mail');
+    const problems = await Issue.find().populate('createdBy', 'mail');
     res.status(200).json(problems);
   } catch (e) {
     console.error('Error fetching issues:', e);
@@ -15,33 +15,54 @@ router.get('/getissues', async (req, res) => {
   }
 });
 
-// CREATE new issue
-router.post('/create',authenticateToken, async (req, res) => {
-  const { title, description, dueDate, priority } = req.body;
-
-  if (!title || !description || !dueDate || !priority) {
-    return res.status(400).json({ message: "All fields are required" });
-  }
-
+// GET my issues
+router.get('/myissues', authenticateToken, async (req, res) => {
   try {
-    const newIssue = new Issue({ title, description, dueDate, priority,user:req.user.id });
-    const savedIssue = await newIssue.save();
-    
-    res.status(201).json({ message: "Issue created successfully", savedIssue });
+    const userIssues = await Issue.find({ createdBy: req.user.id }).populate('createdBy', 'mail');
+    res.status(200).json(userIssues);
   } catch (e) {
-    console.error('Error creating issue:', e);
-    res.status(500).json({ message: "Failed to create issue", error: e.message });
+    console.error('Error fetching user issues:', e);
+    res.status(500).json({ message: "Failed to fetch user issues", error: e.message });
   }
 });
 
+// CREATE new issue
+router.post('/create', authenticateToken, async (req, res) => {
+  try {
+    const { title, description, category } = req.body;
+
+    if (!title || !category) {
+      return res.status(400).json({ message: 'Title and category are required.' });
+    }
+
+    const newIssue = new Issue({
+      title,
+      description,
+      category,
+      createdBy: req.user._id 
+    });
+
+    const savedIssue = await newIssue.save();
+
+    res.status(201).json({
+      message: 'Issue created successfully',
+      savedIssue
+    });
+  } catch (err) {
+    console.error('Error creating issue:', err);
+    res.status(500).json({ message: 'Failed to create issue', error: err.message });
+  }
+});
+
+
 // UPDATE issue
 router.put('/updatedIssues/:id', async (req, res) => {
-  const { title, description, dueDate, priority } = req.body;
+  const { title, description, category, status } = req.body;
 
   try {
     const updatedIssue = await Issue.findByIdAndUpdate(
       req.params.id,
-      { title, description, dueDate, priority },
+      { title, description, category, status },
       { new: true }
     );
 

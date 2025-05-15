@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const Signup = () => {
-  const [formData, setFormData] = useState({ mail: '', password: '', role: 'resident' });
+  const [formData, setFormData] = useState({ name:" ",mail: '', password: '', role: 'resident' });
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -28,6 +28,15 @@ const Signup = () => {
       <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-md w-full max-w-md">
         <h2 className="text-2xl font-bold text-center text-gray-900 dark:text-white mb-6">Sign Up</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+          name="name"
+          type="text"
+          placeholder='name'
+          value={formData.name}
+          onChange={handleChange}
+          required
+           className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+          ></input>
           <input
             name="mail"
             type="email"
