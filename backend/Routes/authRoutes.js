@@ -12,17 +12,32 @@ const authRouter = express.Router();
 
 // Generate JWT token
 const generateToken = (userId, role) => {
-  return jwt.sign({ id: userId, role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+  return jwt.sign({ id: userId, role }, process.env.JWT_SECRET, { expiresIn: '7d' });}
 
 
 // Signup Route
+authRouter.get('/getUser/:id', async (req, res) => {
+  try {
+    const getUser = await User.findOne({ _id: req.params.id }); // ✅ fix here
+    if (!getUser) {
+      return res.status(400).json({ message: "User not found" });
+    }
+    res.status(200).json(getUser);
+  } catch (e) {
+    res.status(500).json({ message: "Failed to fetch user", error: e.message });
+  }
+});
+
+
+
+
 authRouter.post('/signup', async (req, res) => {
   try {
 
-    const { mail, password, role } = req.body;
+    const { name,mail, password, role } = req.body;
 
 
-    if (!mail || !password || !role) {
+    if (!name||!mail || !password || !role) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -34,7 +49,7 @@ authRouter.post('/signup', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
 
-    const newUser = new User({ mail, password: hashedPassword, role });
+    const newUser = new User({name, mail, password: hashedPassword, role });
     await newUser.save();
 
     const token = generateToken(newUser._id, newUser.role);
@@ -81,7 +96,7 @@ authRouter.get('/getusers', authenticateToken, async (req, res) => {
 // Update User
 authRouter.put('/:id', authenticateToken, async (req, res) => {
   try {
-    const { mail, password } = req.body;
+    const {name, mail, password } = req.body;
     let updatedFields = { mail };
     if (password) {
       const hashedPassword = await bcrypt.hash(password, 10);

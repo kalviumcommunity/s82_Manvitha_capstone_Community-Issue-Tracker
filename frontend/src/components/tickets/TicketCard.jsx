@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Clock, AlertTriangle, CheckCircle, User } from 'lucide-react';
+import { CheckCircle, User } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 const statusConfig = {
@@ -8,29 +8,6 @@ const statusConfig = {
   'in-progress': { color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300', label: 'In Progress' },
   'resolved': { color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300', label: 'Resolved' },
   'closed': { color: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300', label: 'Closed' }
-};
-
-const priorityConfig = {
-  'low': { 
-    color: 'text-gray-500', 
-    label: 'Low', 
-    icon: <Clock size={16} className="text-gray-500" />
-  },
-  'medium': { 
-    color: 'text-blue-500', 
-    label: 'Medium', 
-    icon: <Clock size={16} className="text-blue-500" />
-  },
-  'high': { 
-    color: 'text-orange-500', 
-    label: 'High', 
-    icon: <AlertTriangle size={16} className="text-orange-500" />
-  },
-  'urgent': { 
-    color: 'text-red-500', 
-    label: 'Urgent', 
-    icon: <AlertTriangle size={16} className="text-red-500" />
-  }
 };
 
 const categoryEmoji = {
@@ -45,7 +22,6 @@ const categoryEmoji = {
 
 const TicketCard = ({ ticket, compact = false }) => {
   const status = statusConfig[ticket.status];
-  const priority = priorityConfig[ticket.priority];
   const ticketLink = `/tickets/${ticket.id}`;
 
   return (
@@ -53,13 +29,7 @@ const TicketCard = ({ ticket, compact = false }) => {
       to={ticketLink}
       className="block border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md transition-shadow bg-white dark:bg-gray-800 overflow-hidden"
     >
-      {/* Priority Indicator */}
-      <div className={`h-1 ${
-        ticket.priority === 'urgent' ? 'bg-red-500' :
-        ticket.priority === 'high' ? 'bg-orange-500' :
-        ticket.priority === 'medium' ? 'bg-blue-500' :
-        'bg-gray-300 dark:bg-gray-600'
-      }`}></div>
+      {/* Removed Priority Indicator */}
 
       <div className="p-4">
         <div className="flex items-start justify-between">
@@ -85,14 +55,8 @@ const TicketCard = ({ ticket, compact = false }) => {
         )}
 
         <div className="mt-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center text-xs">
-              {priority.icon}
-              <span className={`ml-1 ${priority.color}`}>{priority.label}</span>
-            </div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">
-              {ticket.unit}
-            </div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            {ticket.unit}
           </div>
           <div className="text-xs text-gray-500 dark:text-gray-400">
             {formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true })}

@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { Bell, Sun, Moon } from 'lucide-react';
+import { Bell, Sun, Moon, LogOut } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useNotifications } from '../../contexts/NotificationContext';
+import { useAuth } from '../../contexts/AuthContext';
 import NotificationDropdown from './NotificationDropdown';
 
 const Navbar = () => {
   const { theme, toggleTheme } = useTheme();
   const { unreadCount } = useNotifications();
+  const { logout } = useAuth();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   return (
@@ -39,7 +41,7 @@ const Navbar = () => {
             </>
           )}
         </div>
-        
+
         {/* Theme toggle */}
         <button 
           onClick={toggleTheme}
@@ -51,6 +53,15 @@ const Navbar = () => {
           ) : (
             <Moon size={20} className="text-gray-600" />
           )}
+        </button>
+
+        {/* Logout */}
+        <button
+          onClick={logout}
+          className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+          aria-label="Logout"
+        >
+          <LogOut size={20} className="text-gray-600 dark:text-gray-300" />
         </button>
       </div>
     </header>
