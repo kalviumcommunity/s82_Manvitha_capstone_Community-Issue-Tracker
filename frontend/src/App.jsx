@@ -7,7 +7,7 @@ import Sidebar from './components/common/Sidebar';
 import Navbar from './components/common/Navbar';
 
 import PresidentDashboard from './pages/dashboard/PresidentDashboard';
-import VicePresidentDashboard from './pages/dashboard/ViceResidentDashboard';
+
 import ResidentDashboard from './pages/dashboard/ResidentDashboard';
 import Analytics from './pages/president/analytics';
 import Announcements from './pages/president/announcements';
@@ -42,15 +42,19 @@ function App() {
               <Routes>
                 <Route path="/gdfg" element={<RoleRedirect />} />
                 <Route path="/president/dashboard" element={<PresidentDashboard />} />
+                <Route path="/president/tickets" element={<PresidentDashboard />} />
                 <Route path="/president/analytics" element={<Analytics />} />
                 <Route path="/president/announcements" element={<Announcements />} />
-                <Route path="/vice-president/dashboard" element={<VicePresidentDashboard />} />
                 <Route path="/resident/dashboard" element={<ResidentDashboard />} />
                 <Route path="/resident/new-ticket" element={<NewTicket />} />
                 <Route path="/resident/my-tickets" element={<MyTickets />} />
                 <Route path="/" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
+                <Route path="/tickets/:ticketId" element={<NewTicket />} />
+                <Route path="/resident/new-ticket/:id" element={<NewTicket />} />
+
+
               </Routes>
             </Layout>
           </Router>

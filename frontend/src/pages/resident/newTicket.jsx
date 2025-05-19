@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Send, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
@@ -8,6 +8,8 @@ import { jwtDecode } from 'jwt-decode';
 
 const NewTicket = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const ticketToEdit = location.state?.ticketToEdit;
   const { user } = useAuth();
   const { addNotification } = useNotifications();
 
@@ -33,7 +35,15 @@ const NewTicket = () => {
       const id = decoded.id || decoded._id;
       setUserId(id);
     }
-  }, []);
+
+    if (ticketToEdit) {
+      setFormData({
+        title: ticketToEdit.title || '',
+        description: ticketToEdit.description || '',
+        category: ticketToEdit.category || '',
+      });
+    }
+  }, [ticketToEdit]);
 
   const categories = [
     'maintenance',
@@ -111,7 +121,6 @@ const NewTicket = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!validate()) return;
 
     if (!userId) {
@@ -119,41 +128,64 @@ const NewTicket = () => {
       return;
     }
 
+    const token = localStorage.getItem('token');
+
     try {
-      const token = localStorage.getItem('token');
+      if (ticketToEdit?._id) {
+        // Update existing ticket
+        await axios.put(
+          `http://localhost:3551/api/issues/updatedIssues/${ticketToEdit._id}`,
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
 
-      const ticketData = {
-        ...formData,
-        createdBy: userId,
-      };
-      console.log('Submitting ticket with data:', ticketData);
+        addNotification({
+          userId: user?.id || '',
+          title: 'Ticket Updated',
+          message: `Your ticket "${formData.title}" has been updated successfully.`,
+          read: false,
+          type: 'ticket',
+          linkTo: `/tickets/${ticketToEdit._id}`,
+        });
 
-      const response = await axios.post(
-        'http://localhost:3551/api/issues/create',
-        ticketData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
+        navigate('/resident/my-tickets');
+      } else {
+        // Create new ticket
+        const response = await axios.post(
+          'http://localhost:3551/api/issues/create',
+          {
+            ...formData,
+            createdBy: userId,
           },
-        }
-      );
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
 
-      const result = response.data;
+        const result = response.data;
 
-      addNotification({
-        userId: user?.id || '',
-        title: 'Ticket Created',
-        message: `Your ticket "${formData.title}" has been created successfully.`,
-        read: false,
-        type: 'ticket',
-        linkTo: `/tickets/${result.savedIssue._id}`,
-      });
+        addNotification({
+          userId: user?.id || '',
+          title: 'Ticket Created',
+          message: `Your ticket "${formData.title}" has been created successfully.`,
+          read: false,
+          type: 'ticket',
+          linkTo: `/tickets/${result.savedIssue._id}`,
+        });
 
-      navigate('/resident/my-tickets');
+        navigate('/resident/my-tickets');
+      }
     } catch (error) {
       console.error(
-        'Error creating ticket:',
+        'Error submitting ticket:',
         error.response?.data?.message || error.message
       );
       alert(`Error: ${error.response?.data?.message || error.message}`);
@@ -176,7 +208,7 @@ const NewTicket = () => {
 
       <div className="max-w-3xl mx-auto">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-          Submit a New Ticket
+          {ticketToEdit ? 'Edit Ticket' : 'Submit a New Ticket'}
         </h1>
 
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
@@ -284,7 +316,7 @@ const NewTicket = () => {
                   className="flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
                   <Send size={16} className="mr-2" />
-                  Submit Ticket
+                  {ticketToEdit ? 'Update Ticket' : 'Submit Ticket'}
                 </button>
               </div>
             </div>
