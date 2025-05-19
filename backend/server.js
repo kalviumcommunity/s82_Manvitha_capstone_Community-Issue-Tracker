@@ -6,6 +6,7 @@ require("dotenv").config();
 const db = require("./db/db");
 const issueRoutes = require("./Routes/route");
 const authRouter = require("./Routes/authRoutes");
+const google=require("./Routes/geminiApi");
 const authenticateToken = require("./middleware/authMiddleWare");
 
 const app = express();
@@ -20,7 +21,8 @@ db();
 
 // ROUTES
 app.use("/auth", authRouter); // signup, login, etc.
-app.use("/api/issues", authenticateToken, issueRoutes); // protected issues route
+app.use("/api/issues",issueRoutes); // protected issues route
+app.use("/api/google",google);
 
 // START SERVER
 app.listen(port, () => {

@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Send, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import axios from 'axios';
+import { jwtDecode } from 'jwt-decode';
 
 const NewTicket = () => {
   const navigate = useNavigate();
@@ -21,6 +22,17 @@ const NewTicket = () => {
     description: '',
     category: '',
   });
+
+  const [userId, setUserId] = useState('');
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      const decoded = jwtDecode(token);
+      const id = decoded.id || decoded._id;
+      setUserId(id);
+    }
+  }, []);
 
   const categories = [
     'maintenance',
@@ -68,17 +80,28 @@ const NewTicket = () => {
     }
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  if (!validate()) return;
+    if (!validate()) return;
 
-  try {
-    const token = localStorage.getItem('token');
+     if (!userId) {
+    alert("User not authenticated. Please login again.");
+    return;
+  }
 
-   const response = await axios.post(
+    try {
+      const token = localStorage.getItem('token');
+
+      const ticketData = {
+  ...formData,
+  createdBy: userId,
+};
+console.log("Submitting ticket with data:", ticketData);
+
+const response = await axios.post(
   'http://localhost:3551/api/issues/create',
-  { ...formData },
+  ticketData,
   {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -86,26 +109,25 @@ const handleSubmit = async (e) => {
     },
   }
 );
-    
 
-    const result = response.data;
 
-    addNotification({
-      userId: user?.id || '',
-      title: 'Ticket Created',
-      message: `Your ticket "${formData.title}" has been created successfully.`,
-      read: false,
-      type: 'ticket',
-      linkTo: `/tickets/${result.savedIssue._id}`,
-    });
+      const result = response.data;
 
-    navigate('/resident/my-tickets');
-  } catch (error) {
-    console.error('Error creating ticket:', error.response?.data?.message || error.message);
-    alert(`Error: ${error.response?.data?.message || error.message}`);
-  }
-};
+      addNotification({
+        userId: user?.id || '',
+        title: 'Ticket Created',
+        message: `Your ticket "${formData.title}" has been created successfully.`,
+        read: false,
+        type: 'ticket',
+        linkTo: `/tickets/${result.savedIssue._id}`,
+      });
 
+      navigate('/resident/my-tickets');
+    } catch (error) {
+      console.error('Error creating ticket:', error.response?.data?.message || error.message);
+      alert(`Error: ${error.response?.data?.message || error.message}`);
+    }
+  };
 
   if (!user) return null;
 
@@ -131,10 +153,7 @@ const handleSubmit = async (e) => {
             <div className="space-y-6">
               {/* Title */}
               <div>
-                <label
-                  htmlFor="title"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
+                <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Title
                 </label>
                 <input
@@ -157,10 +176,7 @@ const handleSubmit = async (e) => {
 
               {/* Description */}
               <div>
-                <label
-                  htmlFor="description"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Description
                 </label>
                 <textarea
@@ -183,10 +199,7 @@ const handleSubmit = async (e) => {
 
               {/* Category */}
               <div>
-                <label
-                  htmlFor="category"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
+                <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Category
                 </label>
                 <select
