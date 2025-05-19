@@ -11,14 +11,22 @@ router.get('/getissues', async (req, res) => {
     res.status(200).json(problems);
   } catch (e) {
     console.error('Error fetching issues:', e);
-    res.status(500).json({ message: "Failed to fetch issues", error: e.message });
+    res.status(500).json({ message: e.message, error: e.message });
   }
 });
 
 // GET my issues
-router.get('/myissues', authenticateToken, async (req, res) => {
+router.post('/myissues', async (req, res) => {
   try {
-    const userIssues = await Issue.find({ createdBy: req.user.id }).populate('createdBy', 'mail');
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ message: "userId is required in body" });
+    }
+
+    const userIssues = await Issue.find({ createdBy: userId }).populate('createdBy', 'mail');
+    console.log(userIssues);
+
     res.status(200).json(userIssues);
   } catch (e) {
     console.error('Error fetching user issues:', e);
@@ -26,33 +34,37 @@ router.get('/myissues', authenticateToken, async (req, res) => {
   }
 });
 
+
 // CREATE new issue
 router.post('/create', authenticateToken, async (req, res) => {
   try {
-    const { title, description, category } = req.body;
+    const { title, description, category, createdBy } = req.body;
 
-    if (!title || !category) {
-      return res.status(400).json({ message: 'Title and category are required.' });
+    if (!title || !category || !createdBy) {
+      return res.status(400).json({ message: 'Title, category, and createdBy are required.' });
     }
+
+    // Optionally, you could verify that createdBy matches req.user._id to ensure authenticity
 
     const newIssue = new Issue({
       title,
       description,
       category,
-      createdBy: req.user._id 
+      createdBy,
     });
 
     const savedIssue = await newIssue.save();
 
     res.status(201).json({
       message: 'Issue created successfully',
-      savedIssue
+      savedIssue,
     });
   } catch (err) {
     console.error('Error creating issue:', err);
-    res.status(500).json({ message: 'Failed to create issue', error: err.message });
+    res.status(500).json({ message: err.message, error: err.message });
   }
 });
+
 
 
 // UPDATE issue

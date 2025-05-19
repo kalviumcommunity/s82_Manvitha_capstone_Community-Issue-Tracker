@@ -13,6 +13,8 @@ const issueSchema = new mongoose.Schema({
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+   required: true
   }
 });
+
+module.exports=mongoose.model('Issue',issueSchema);

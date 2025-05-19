@@ -18,7 +18,7 @@ const generateToken = (userId, role) => {
 // Signup Route
 authRouter.get('/getUser/:id', async (req, res) => {
   try {
-    const getUser = await User.findOne({ _id: req.params.id }); // ✅ fix here
+    const getUser = await User.findOne({ _id: req.params.id }); 
     if (!getUser) {
       return res.status(400).json({ message: "User not found" });
     }
@@ -70,18 +70,29 @@ authRouter.post('/login', async (req, res) => {
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
-    const isMatch=await bcrypt.compare(password,user.password);
-    if(!isMatch){
-      return res.status(401).json({message:"Invalid Credantials"});
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const token = generateToken(user._id,user.role);
-    res.status(200).json({ message: "Login successful", token, role: user.role });
+    const token = generateToken(user._id, user.role);
+
+    res.status(200).json({ 
+      message: "Login successful", 
+      token, 
+      role: user.role,
+      user: {
+        id: user._id,
+        mail: user.mail,
+        name: user.name // if you want to send name too
+      }
+    });
 
   } catch (e) {
     res.status(500).json({ message: "Login failed", error: e.message });
   }
 });
+
 
 // Protected: Get All Users
 authRouter.get('/getusers', authenticateToken, async (req, res) => {
