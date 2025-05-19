@@ -24,6 +24,7 @@ const NewTicket = () => {
   });
 
   const [userId, setUserId] = useState('');
+  const [loadingSuggestion, setLoadingSuggestion] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -80,36 +81,63 @@ const NewTicket = () => {
     }
   };
 
+  const handleAutoFill = async () => {
+    if (!formData.title.trim()) {
+      setFormErrors((prev) => ({
+        ...prev,
+        title: 'Title is required for AI suggestion.',
+      }));
+      return;
+    }
+
+    try {
+      setLoadingSuggestion(true);
+
+      const res = await axios.post('http://localhost:3551/api/autocomplete', {
+        prompt: `Write a detailed description for the resident issue titled: "${formData.title}"`,
+      });
+
+      const suggestion = res.data?.suggestion;
+      if (suggestion) {
+        setFormData((prev) => ({ ...prev, description: suggestion }));
+      }
+    } catch (err) {
+      console.error('AI suggestion error:', err);
+      alert('Failed to generate description. Try again later.');
+    } finally {
+      setLoadingSuggestion(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!validate()) return;
 
-     if (!userId) {
-    alert("User not authenticated. Please login again.");
-    return;
-  }
+    if (!userId) {
+      alert('User not authenticated. Please login again.');
+      return;
+    }
 
     try {
       const token = localStorage.getItem('token');
 
       const ticketData = {
-  ...formData,
-  createdBy: userId,
-};
-console.log("Submitting ticket with data:", ticketData);
+        ...formData,
+        createdBy: userId,
+      };
+      console.log('Submitting ticket with data:', ticketData);
 
-const response = await axios.post(
-  'http://localhost:3551/api/issues/create',
-  ticketData,
-  {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-  }
-);
-
+      const response = await axios.post(
+        'http://localhost:3551/api/issues/create',
+        ticketData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
 
       const result = response.data;
 
@@ -124,7 +152,10 @@ const response = await axios.post(
 
       navigate('/resident/my-tickets');
     } catch (error) {
-      console.error('Error creating ticket:', error.response?.data?.message || error.message);
+      console.error(
+        'Error creating ticket:',
+        error.response?.data?.message || error.message
+      );
       alert(`Error: ${error.response?.data?.message || error.message}`);
     }
   };
@@ -153,7 +184,10 @@ const response = await axios.post(
             <div className="space-y-6">
               {/* Title */}
               <div>
-                <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label
+                  htmlFor="title"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
                   Title
                 </label>
                 <input
@@ -176,7 +210,10 @@ const response = await axios.post(
 
               {/* Description */}
               <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label
+                  htmlFor="description"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
                   Description
                 </label>
                 <textarea
@@ -195,11 +232,24 @@ const response = await axios.post(
                 {formErrors.description && (
                   <p className="mt-1 text-sm text-red-600">{formErrors.description}</p>
                 )}
+                <div className="mt-2">
+                  <button
+                    type="button"
+                    onClick={handleAutoFill}
+                    disabled={loadingSuggestion}
+                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline disabled:opacity-50"
+                  >
+                    {loadingSuggestion ? 'Generating description...' : 'Autofill with AI'}
+                  </button>
+                </div>
               </div>
 
               {/* Category */}
               <div>
-                <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label
+                  htmlFor="category"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
                   Category
                 </label>
                 <select
