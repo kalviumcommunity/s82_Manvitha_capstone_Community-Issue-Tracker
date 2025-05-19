@@ -40,7 +40,7 @@ router.post("/autocomplete", async (req, res) => {
       ]
     }));
 
-    const text = await result.response.text(); // Important: use `.response.text()` for Gemini SDK
+    const text = await result.response.text(); 
     res.json({ suggestion: text.trim() });
 
   } catch (error) {
