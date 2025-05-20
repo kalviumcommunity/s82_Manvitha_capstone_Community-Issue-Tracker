@@ -31,7 +31,7 @@ const Signup = () => {
           <input
           name="name"
           type="text"
-          placeholder='name'
+          placeholder="name"
           value={formData.name}
           onChange={handleChange}
           required
@@ -63,7 +63,7 @@ const Signup = () => {
           >
             <option value="resident">Resident</option>
             <option value="president">President</option>
-            <option value="vice-president">Vice President</option>
+            
           </select>
           <button
             type="submit"
