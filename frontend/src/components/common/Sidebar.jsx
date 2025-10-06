@@ -35,7 +35,6 @@ const roleLinks = {
   president: [
     { to: '/president', icon: <Home size={20} />, text: 'Dashboard' },
     { to: '/president/tickets', icon: <MessageSquare size={20} />, text: 'All Tickets' },
-    { to: '/president/analytics', icon: <BarChart2 size={20} />, text: 'Analytics' },
     { to: '/president/announcements', icon: <Bell size={20} />, text: 'Announcements' },
   ],
   'vice-president': [

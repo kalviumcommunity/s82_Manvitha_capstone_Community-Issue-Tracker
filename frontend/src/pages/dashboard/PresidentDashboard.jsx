@@ -1,10 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BarChart2, Users, AlertTriangle, CheckCircle2, Bell, PlusCircle } from 'lucide-react';
-import { mockTickets, mockAnnouncements, mockAnalytics } from '../../data/mockData';
+import { mockTickets, mockAnnouncements,} from '../../data/mockData';
 import TicketCard from '../../components/tickets/TicketCard';
 import AnnouncementBanner from '../../components/announcements/AnnouncementBanner';
-import AnalyticsChart from '../../components/analytics/AnalyticsChart';
 
 const PresidentDashboard = () => {
   const navigate = useNavigate();
@@ -14,22 +13,8 @@ const PresidentDashboard = () => {
   const urgentTickets = mockTickets.filter(t => t.priority === 'urgent').length;
   const resolvedTickets = mockTickets.filter(t => t.status === 'resolved').length;
 
-  const priorityData = Object.entries(mockAnalytics.ticketsByPriority).map(([name, value]) => ({
-    name: name.charAt(0).toUpperCase() + name.slice(1),
-    value,
-    color: name === 'urgent' ? '#FF0000' :
-           name === 'high' ? '#FF8042' :
-           name === 'medium' ? '#FFBB28' : '#00C49F'
-  }));
-
-  const statusData = Object.entries(mockAnalytics.ticketsByStatus).map(([name, value]) => ({
-    name: name.charAt(0).toUpperCase() + name.slice(1).replace('-', ' '),
-    value,
-    color: name === 'open' ? '#FFBB28' :
-           name === 'in-progress' ? '#0088FE' :
-           name === 'resolved' ? '#00C49F' : '#82ca9d'
-  }));
-
+  
+  
   const recentTickets = [...mockTickets].sort((a, b) =>
     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   ).slice(0, 3);
@@ -41,7 +26,7 @@ const PresidentDashboard = () => {
   return (
     <div className="p-4 lg:p-6">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-        President Dashboard
+        Admin Dashboard
       </h1>
 
       {/* Quick stats */}
@@ -87,42 +72,7 @@ const PresidentDashboard = () => {
         </div>
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-medium text-gray-900 dark:text-white">Tickets by Priority</h2>
-            <button
-              onClick={() => navigate('/president/analytics')}
-              className="text-sm text-blue-600 dark:text-blue-400 hover:underline focus:outline-none"
-            >
-              View Details
-            </button>
-          </div>
-          <AnalyticsChart
-            data={priorityData}
-            title="Tickets by Priority"
-            type="pie"
-          />
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-medium text-gray-900 dark:text-white">Tickets by Status</h2>
-            <button
-              onClick={() => navigate('/president/analytics')}
-              className="text-sm text-blue-600 dark:text-blue-400 hover:underline focus:outline-none"
-            >
-              View Details
-            </button>
-          </div>
-          <AnalyticsChart
-            data={statusData}
-            title="Tickets by Status"
-            type="pie"
-          />
-        </div>
-      </div>
+      
 
       {/* Recent Tickets */}
       <div className="mb-6">
