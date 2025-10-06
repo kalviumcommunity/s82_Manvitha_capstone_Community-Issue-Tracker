@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Send, Calendar, PlusCircle, Trash, Edit, Eye } from 'lucide-react';
-
 import { mockAnnouncements } from '../../data/mockData';
 import AnnouncementBanner from '../../components/announcements/AnnouncementBanner';
 import { useAuth } from '../../contexts/AuthContext';

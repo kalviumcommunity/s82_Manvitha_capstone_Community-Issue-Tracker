@@ -1,0 +1,19 @@
+{
+  "name": "s82_manvitha_capstone_community-issue-tracker",
+  "version": "1.0.0",
+  "description": "Community Issue Tracker",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kalviumcommunity/s82_Manvitha_capstone_Community-Issue-Tracker.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kalviumcommunity/s82_Manvitha_capstone_Community-Issue-Tracker/issues"
+  },
+  "homepage": "https://github.com/kalviumcommunity/s82_Manvitha_capstone_Community-Issue-Tracker#readme"
+}

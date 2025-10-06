@@ -9,7 +9,7 @@ import Navbar from './components/common/Navbar';
 import PresidentDashboard from './pages/dashboard/PresidentDashboard';
 
 import ResidentDashboard from './pages/dashboard/ResidentDashboard';
-import Analytics from './pages/president/analytics';
+
 import Announcements from './pages/president/announcements';
 import NewTicket from './pages/resident/newTicket';
 import MyTickets from './pages/resident/myTicket';
@@ -43,7 +43,6 @@ function App() {
                 <Route path="/gdfg" element={<RoleRedirect />} />
                 <Route path="/president/dashboard" element={<PresidentDashboard />} />
                 <Route path="/president/tickets" element={<PresidentDashboard />} />
-                <Route path="/president/analytics" element={<Analytics />} />
                 <Route path="/president/announcements" element={<Announcements />} />
                 <Route path="/resident/dashboard" element={<ResidentDashboard />} />
                 <Route path="/resident/new-ticket" element={<NewTicket />} />
