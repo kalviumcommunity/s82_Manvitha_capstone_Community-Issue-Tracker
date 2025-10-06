@@ -79,7 +79,7 @@ const PresidentDashboard = () => {
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-medium text-gray-900 dark:text-white">Recent Tickets</h2>
           <button
-            onClick={() => navigate('/president/tickets')}
+            onClick={() => navigate('/president/all-Tickets')}
             className="text-sm text-blue-600 dark:text-blue-400 hover:underline focus:outline-none"
           >
             View All

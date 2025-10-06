@@ -35,7 +35,7 @@ const ResidentDashboard = () => {
   return (
     <div className="p-4 lg:p-6">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-        Resident Dashboard
+        User Dashboard
       </h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">

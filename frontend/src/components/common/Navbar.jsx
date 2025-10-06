@@ -54,15 +54,6 @@ const Navbar = () => {
             <Moon size={20} className="text-gray-600" />
           )}
         </button>
-
-        {/* Logout */}
-        <button
-          onClick={logout}
-          className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
-          aria-label="Logout"
-        >
-          <LogOut size={20} className="text-gray-600 dark:text-gray-300" />
-        </button>
       </div>
     </header>
   );

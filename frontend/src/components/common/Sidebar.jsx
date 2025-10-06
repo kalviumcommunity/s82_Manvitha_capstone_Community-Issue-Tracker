@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { jwtDecode } from 'jwt-decode';
+import {jwtDecode}  from 'jwt-decode';
 import axios from 'axios'; // <-- Add this
 import {
   Home,
@@ -34,13 +34,8 @@ const SidebarLink = ({ to, icon, text }) => (
 const roleLinks = {
   president: [
     { to: '/president', icon: <Home size={20} />, text: 'Dashboard' },
-    { to: '/president/tickets', icon: <MessageSquare size={20} />, text: 'All Tickets' },
+    { to: '/president/all-tickets', icon: <MessageSquare size={20} />, text: 'All Tickets' },
     { to: '/president/announcements', icon: <Bell size={20} />, text: 'Announcements' },
-  ],
-  'vice-president': [
-    { to: '/vice-president', icon: <Home size={20} />, text: 'Dashboard' },
-    { to: '/vice-president/urgent', icon: <AlertTriangle size={20} />, text: 'Urgent Tickets' },
-    { to: '/vice-president/assigned', icon: <User size={20} />, text: 'Assigned to Me' },
   ],
   resident: [
     { to: '/resident', icon: <Home size={20} />, text: 'Dashboard' },

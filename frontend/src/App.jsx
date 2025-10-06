@@ -9,7 +9,7 @@ import Navbar from './components/common/Navbar';
 import PresidentDashboard from './pages/dashboard/PresidentDashboard';
 
 import ResidentDashboard from './pages/dashboard/ResidentDashboard';
-
+import ViewAnnouncements from './pages/resident/announcements';
 import Announcements from './pages/president/announcements';
 import NewTicket from './pages/resident/newTicket';
 import MyTickets from './pages/resident/myTicket';
