@@ -41,7 +41,7 @@ function App() {
             <Layout>
               <Routes>
                 <Route path="/gdfg" element={<RoleRedirect />} />
-                <Route path="/president/dashboard" element={<PresidentDashboard />} />
+                <Route path="/president/dashboard" element={<PresidentDashboard />} />  
                 <Route path="/president/tickets" element={<PresidentDashboard />} />
                 <Route path="/president/announcements" element={<Announcements />} />
                 <Route path="/resident/dashboard" element={<ResidentDashboard />} />

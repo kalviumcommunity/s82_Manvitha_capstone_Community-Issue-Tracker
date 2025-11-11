@@ -8,37 +8,33 @@ const Login = () => {
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
-  e.preventDefault();
-  try {
-    const res = await axios.post("http://localhost:3551/auth/login", {
-      mail,
-      password,
-    });
+    e.preventDefault();
+    try {
+      const res = await axios.post("http://localhost:3551/api/auth/login", {
+        mail,
+        password,
+      }, { withCredentials: true }); // Important: This sends/receives cookies
 
-    alert("Login successful");
-    console.log(res);
+      alert("Login successful");
+      console.log(res);
 
-    // Store token, role, and user details in localStorage
-    localStorage.setItem("token", res.data.token);
-    localStorage.setItem("role", res.data.role);
-    localStorage.setItem("user", JSON.stringify(res.data.user)); // store user details as JSON string
-
-    // Navigate based on role
-    const role = res.data.role || localStorage.getItem("role");
-    if (role === "president") {
-      navigate("/president/dashboard");
-    } else if (role === "vice-president") {
-      navigate("/vice-president/dashboard");
-    } else if (role === "resident") {
-      navigate("/resident/dashboard");
-    } else {
-      alert("Role not recognized");
-      navigate("/login");
+      // No more localStorage! The browser handles the cookie.
+      // We navigate based on the role sent back from the server.
+      const role = res.data.role;
+      if (role === "president") {
+        navigate("/president/dashboard");
+      } else if (role === "vice-president") {
+        navigate("/vice-president/dashboard");
+      } else if (role === "resident") {
+        navigate("/resident/dashboard");
+      } else {
+        alert("Role not recognized");
+        navigate("/login");
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || "Login failed");
     }
-  } catch (err) {
-    alert(err.response?.data?.message || "Login failed");
-  }
-};
+  };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">

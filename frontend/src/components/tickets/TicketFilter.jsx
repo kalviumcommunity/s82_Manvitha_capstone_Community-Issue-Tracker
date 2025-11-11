@@ -1,15 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import Cookies from 'js-cookie';
 import { Search, Filter } from 'lucide-react';
 
 const TicketFilter = ({ onFilter }) => {
-  const [filters, setFilters] = useState({
-    search: '',
-    categories: [],
-    priorities: [],
-    statuses: []
+  // Load filters from cookies or use defaults
+  const [filters, setFilters] = useState(() => {
+    const savedFilters = Cookies.get('ticketFilters');
+    return savedFilters
+      ? JSON.parse(savedFilters)
+      : { search: '', categories: [], priorities: [], statuses: [] };
   });
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  // Update cookies whenever filters change
+  useEffect(() => {
+    Cookies.set('ticketFilters', JSON.stringify(filters), { expires: 7 }); // lasts 7 days
+  }, [filters]);
+
+  // Trigger parent update on mount
+  useEffect(() => {
+    onFilter(filters);
+  }, []); // run once on load
 
   const handleSearchChange = (e) => {
     const newFilters = { ...filters, search: e.target.value };
@@ -29,13 +41,9 @@ const TicketFilter = ({ onFilter }) => {
   };
 
   const resetFilters = () => {
-    const reset = {
-      search: '',
-      categories: [],
-      priorities: [],
-      statuses: []
-    };
+    const reset = { search: '', categories: [], priorities: [], statuses: [] };
     setFilters(reset);
+    Cookies.remove('ticketFilters'); // remove saved filters
     onFilter(reset);
   };
 
@@ -45,6 +53,7 @@ const TicketFilter = ({ onFilter }) => {
 
   return (
     <div className="w-full bg-white dark:bg-gray-800 shadow rounded-lg p-4 mb-6">
+      {/* Search Bar */}
       <div className="relative">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <Search size={18} className="text-gray-400" />
@@ -58,6 +67,7 @@ const TicketFilter = ({ onFilter }) => {
         />
       </div>
 
+      {/* Filter buttons */}
       <div className="flex flex-wrap items-center mt-3 gap-2">
         <button
           onClick={() => setIsFilterOpen(!isFilterOpen)}
@@ -77,6 +87,7 @@ const TicketFilter = ({ onFilter }) => {
         )}
       </div>
 
+      {/* Dropdown Filter Panel */}
       {isFilterOpen && (
         <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Categories */}
@@ -91,9 +102,7 @@ const TicketFilter = ({ onFilter }) => {
                     onChange={e => handleCheckboxChange(e, 'categories', category)}
                     className="rounded text-blue-500 focus:ring-blue-500 h-4 w-4 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
                   />
-                  <span className="ml-2 text-sm text-gray-700 dark:text-gray-300 capitalize">
-                    {category}
-                  </span>
+                  <span className="ml-2 text-sm text-gray-700 dark:text-gray-300 capitalize">{category}</span>
                 </label>
               ))}
             </div>
@@ -111,9 +120,7 @@ const TicketFilter = ({ onFilter }) => {
                     onChange={e => handleCheckboxChange(e, 'priorities', priority)}
                     className="rounded text-blue-500 focus:ring-blue-500 h-4 w-4 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
                   />
-                  <span className="ml-2 text-sm text-gray-700 dark:text-gray-300 capitalize">
-                    {priority}
-                  </span>
+                  <span className="ml-2 text-sm text-gray-700 dark:text-gray-300 capitalize">{priority}</span>
                 </label>
               ))}
             </div>
@@ -131,9 +138,7 @@ const TicketFilter = ({ onFilter }) => {
                     onChange={e => handleCheckboxChange(e, 'statuses', status)}
                     className="rounded text-blue-500 focus:ring-blue-500 h-4 w-4 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
                   />
-                  <span className="ml-2 text-sm text-gray-700 dark:text-gray-300 capitalize">
-                    {status.replace('-', ' ')}
-                  </span>
+                  <span className="ml-2 text-sm text-gray-700 dark:text-gray-300 capitalize">{status.replace('-', ' ')}</span>
                 </label>
               ))}
             </div>

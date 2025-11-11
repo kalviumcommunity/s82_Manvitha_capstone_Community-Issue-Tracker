@@ -1,12 +1,48 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Check, Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useNotifications } from '../../contexts/NotificationContext';
+import Cookies from 'js-cookie';
 import { formatDistanceToNow } from 'date-fns';
 
 const NotificationDropdown = ({ onClose }) => {
-  const { notifications, markAsRead, markAllAsRead } = useNotifications();
+  const [notifications, setNotifications] = useState([]);
   const navigate = useNavigate();
+
+  // ✅ Load notifications from cookies
+  useEffect(() => {
+    const stored = Cookies.get('notifications');
+    if (stored) {
+      try {
+        setNotifications(JSON.parse(stored));
+      } catch (err) {
+        console.error('Invalid notifications cookie:', err);
+      }
+    }
+  }, []);
+
+  // ✅ Mark single notification as read
+  const markAsRead = (id) => {
+    const updated = notifications.map((n) =>
+      n.id === id ? { ...n, read: true } : n
+    );
+    setNotifications(updated);
+    Cookies.set('notifications', JSON.stringify(updated), { expires: 7 });
+  };
+
+  // ✅ Mark all as read
+  const markAllAsRead = () => {
+    const updated = notifications.map((n) => ({ ...n, read: true }));
+    setNotifications(updated);
+    Cookies.set('notifications', JSON.stringify(updated), { expires: 7 });
+  };
+
+  const handleNotificationClick = (notification) => {
+    markAsRead(notification.id);
+    onClose();
+    if (notification.linkTo) {
+      navigate(notification.linkTo);
+    }
+  };
 
   if (notifications.length === 0) {
     return (
@@ -18,14 +54,6 @@ const NotificationDropdown = ({ onClose }) => {
       </div>
     );
   }
-
-  const handleNotificationClick = (notification) => {
-    markAsRead(notification.id);
-    onClose();
-    if (notification.linkTo) {
-      navigate(notification.linkTo);
-    }
-  };
 
   return (
     <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700 z-30">

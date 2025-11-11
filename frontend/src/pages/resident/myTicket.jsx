@@ -17,7 +17,7 @@ const MyTickets = () => {
       const user = JSON.parse(userDataString);
       if (user?.id) {
         setLoading(true);
-        axios.post('http://localhost:3551/api/issues/myissues', { userId: user.id })
+        axios.post('http://localhost:3551/api/issues/', { userId: user.id })
           .then(res => {
             setTickets(res.data);
             setFilteredTickets(res.data);
@@ -43,7 +43,7 @@ const MyTickets = () => {
   const handleDelete = async (ticketId) => {
     if (!window.confirm("Are you sure you want to delete this ticket?")) return;
     try {
-      await axios.delete(`http://localhost:3551/api/issues/deletedIssues/${ticketId}`);
+      await axios.delete(`http://localhost:3551/api/issues/:id/${ticketId}`);
       const updatedTickets = tickets.filter(ticket => ticket._id !== ticketId);
       setTickets(updatedTickets);
       setFilteredTickets(updatedTickets);

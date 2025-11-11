@@ -132,9 +132,9 @@ const NewTicket = () => {
 
     try {
       if (ticketToEdit?._id) {
-        // Update existing ticket
+        // ✅ Update existing issue
         await axios.put(
-          `http://localhost:3551/api/issues/updatedIssues/${ticketToEdit._id}`,
+          `http://localhost:3551/api/issues/${ticketToEdit._id}`,
           formData,
           {
             headers: {
@@ -155,13 +155,10 @@ const NewTicket = () => {
 
         navigate('/resident/my-tickets');
       } else {
-        // Create new ticket
+        // ✅ Create new issue (do NOT send createdBy — backend handles it)
         const response = await axios.post(
-          'http://localhost:3551/api/issues/create',
-          {
-            ...formData,
-            createdBy: userId,
-          },
+          'http://localhost:3551/api/issues',
+          formData,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -178,7 +175,7 @@ const NewTicket = () => {
           message: `Your ticket "${formData.title}" has been created successfully.`,
           read: false,
           type: 'ticket',
-          linkTo: `/tickets/${result.savedIssue._id}`,
+          linkTo: `/tickets/${result._id}`,
         });
 
         navigate('/resident/my-tickets');
@@ -214,17 +211,13 @@ const NewTicket = () => {
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
           <form onSubmit={handleSubmit}>
             <div className="space-y-6">
-              {/* Title */}
+
               <div>
-                <label
-                  htmlFor="title"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Title
                 </label>
                 <input
                   type="text"
-                  id="title"
                   name="title"
                   value={formData.title}
                   onChange={handleChange}
@@ -240,16 +233,11 @@ const NewTicket = () => {
                 )}
               </div>
 
-              {/* Description */}
               <div>
-                <label
-                  htmlFor="description"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Description
                 </label>
                 <textarea
-                  id="description"
                   name="description"
                   value={formData.description}
                   onChange={handleChange}
@@ -264,28 +252,22 @@ const NewTicket = () => {
                 {formErrors.description && (
                   <p className="mt-1 text-sm text-red-600">{formErrors.description}</p>
                 )}
-                <div className="mt-2">
-                  <button
-                    type="button"
-                    onClick={handleAutoFill}
-                    disabled={loadingSuggestion}
-                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline disabled:opacity-50"
-                  >
-                    {loadingSuggestion ? 'Generating description...' : 'Autofill with AI'}
-                  </button>
-                </div>
+
+                <button
+                  type="button"
+                  onClick={handleAutoFill}
+                  disabled={loadingSuggestion}
+                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline mt-2 disabled:opacity-50"
+                >
+                  {loadingSuggestion ? 'Generating description...' : 'Autofill with AI'}
+                </button>
               </div>
 
-              {/* Category */}
               <div>
-                <label
-                  htmlFor="category"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Category
                 </label>
                 <select
-                  id="category"
                   name="category"
                   value={formData.category}
                   onChange={handleChange}
@@ -295,9 +277,7 @@ const NewTicket = () => {
                       : 'border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500'
                   } shadow-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700`}
                 >
-                  <option value="" disabled>
-                    Select a category
-                  </option>
+                  <option value="" disabled>Select a category</option>
                   {categories.map((category) => (
                     <option key={category} value={category} className="capitalize">
                       {category}
@@ -309,7 +289,6 @@ const NewTicket = () => {
                 )}
               </div>
 
-              {/* Submit Button */}
               <div className="flex justify-end">
                 <button
                   type="submit"
@@ -319,6 +298,7 @@ const NewTicket = () => {
                   {ticketToEdit ? 'Update Ticket' : 'Submit Ticket'}
                 </button>
               </div>
+
             </div>
           </form>
         </div>

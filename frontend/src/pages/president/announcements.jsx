@@ -14,6 +14,8 @@ const Announcements = () => {
   const [announcements, setAnnouncements] = useState(mockAnnouncements);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [viewMode, setViewMode] = useState('all');
+  const [editingAnnouncement, setEditingAnnouncement] = useState(null);
+
   
   const [formData, setFormData] = useState({
     title: '',
@@ -50,9 +52,38 @@ const Announcements = () => {
     }));
   };
   
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
+ const handleSubmit = (e) => {
+  e.preventDefault();
+
+  if (editingAnnouncement) {
+    // Update existing announcement
+    setAnnouncements(prev =>
+      prev.map(a =>
+        a.id === editingAnnouncement.id
+          ? {
+              ...a,
+              title: formData.title,
+              content: formData.content,
+              important: formData.important,
+              scheduledFor: formData.scheduledFor
+                ? new Date(formData.scheduledFor).toISOString()
+                : undefined,
+              updatedAt: new Date().toISOString(),
+            }
+          : a
+      )
+    );
+
+    addNotification({
+      userId: user?.id || '',
+      title: 'Announcement Updated',
+      message: `Announcement "${formData.title}" has been updated successfully.`,
+      read: false,
+      type: 'announcement',
+    });
+
+  } else {
+    // Create new announcement
     const newAnnouncement = {
       id: `a${announcements.length + 1}`,
       title: formData.title,
@@ -60,22 +91,13 @@ const Announcements = () => {
       important: formData.important,
       createdBy: user?.id || '',
       createdAt: new Date().toISOString(),
-      scheduledFor: formData.scheduledFor ? new Date(formData.scheduledFor).toISOString() : undefined,
+      scheduledFor: formData.scheduledFor
+        ? new Date(formData.scheduledFor).toISOString()
+        : undefined,
     };
-    
+
     setAnnouncements(prev => [newAnnouncement, ...prev]);
-    
-    // Reset form
-    setFormData({
-      title: '',
-      content: '',
-      important: false,
-      scheduledFor: '',
-    });
-    
-    setIsFormOpen(false);
-    
-    // Add notification (in a real app, we'd notify all residents)
+
     addNotification({
       userId: user?.id || '',
       title: 'Announcement Created',
@@ -83,8 +105,22 @@ const Announcements = () => {
       read: false,
       type: 'announcement',
     });
-  };
-  
+  }
+
+  // Reset form
+  setFormData({
+    title: '',
+    content: '',
+    important: false,
+    scheduledFor: '',
+  });
+  setIsFormOpen(false);
+  setEditingAnnouncement(null);
+};
+
+    
+    // Reset form
+   
   const deleteAnnouncement = (id) => {
     setAnnouncements(prev => prev.filter(announcement => announcement.id !== id));
   };
@@ -288,12 +324,25 @@ const Announcements = () => {
                 >
                   <Trash size={16} />
                 </button>
-                <button className="p-1.5 rounded-md text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20">
-                  <Edit size={16} />
-                </button>
-                <button className="p-1.5 rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">
-                  <Eye size={16} />
-                </button>
+               <button
+  onClick={() => {
+    setEditingAnnouncement(announcement);
+    setFormData({
+      title: announcement.title,
+      content: announcement.content,
+      important: announcement.important,
+      scheduledFor: announcement.scheduledFor
+        ? new Date(announcement.scheduledFor).toISOString().slice(0, 16)
+        : '',
+    });
+    setIsFormOpen(true);
+  }}
+  className="p-1.5 rounded-md text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+>
+  <Edit size={16} />
+</button>
+
+                
               </div>
             </div>
           ))

@@ -1,11 +1,27 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Send } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { useAuth } from '../../contexts/AuthContext';
+import axios from 'axios';
 
 const CommentThread = ({ comments, onAddComment }) => {
   const [newComment, setNewComment] = useState('');
-  const { user } = useAuth();
+  const [user, setUser] = useState(null);
+
+  // Fetch logged-in user via secure cookie
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await axios.get('http://localhost:3551/auth/me', {
+          withCredentials: true, // send HttpOnly cookie
+        });
+        setUser(res.data);
+      } catch (err) {
+        console.warn('User not logged in or cookie invalid.');
+        setUser(null);
+      }
+    };
+    fetchUser();
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -15,9 +31,7 @@ const CommentThread = ({ comments, onAddComment }) => {
     }
   };
 
-  if (!comments.length && !user) {
-    return null;
-  }
+  if (!comments.length && !user) return null;
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
@@ -28,24 +42,31 @@ const CommentThread = ({ comments, onAddComment }) => {
       {/* Comments list */}
       {comments.length > 0 ? (
         <div className="p-4 space-y-4">
-          {comments.map(comment => (
+          {comments.map((comment) => (
             <div key={comment.id} className="flex gap-3">
               <img
-                src={comment.userAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(comment.userName)}`}
+                src={
+                  comment.userAvatar ||
+                  `https://ui-avatars.com/api/?name=${encodeURIComponent(comment.userName)}`
+                }
                 alt={comment.userName}
                 className="w-8 h-8 rounded-full object-cover flex-shrink-0"
               />
               <div className="flex-1">
                 <div className="flex justify-between items-center mb-1">
                   <div>
-                    <span className="font-medium text-gray-900 dark:text-white">{comment.userName}</span>
-                    <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
-                      comment.userRole === 'president' 
-                        ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300' 
-                        : comment.userRole === 'vice-president' 
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      {comment.userName}
+                    </span>
+                    <span
+                      className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
+                        comment.userRole === 'president'
+                          ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
+                          : comment.userRole === 'vice-president'
                           ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
                           : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                    }`}>
+                      }`}
+                    >
                       {comment.userRole.replace('-', ' ')}
                     </span>
                   </div>
@@ -61,9 +82,7 @@ const CommentThread = ({ comments, onAddComment }) => {
           ))}
         </div>
       ) : (
-        <div className="p-4 text-center text-gray-500 dark:text-gray-400">
-          No comments yet.
-        </div>
+        <div className="p-4 text-center text-gray-500 dark:text-gray-400">No comments yet.</div>
       )}
 
       {/* Comment form */}
@@ -71,7 +90,9 @@ const CommentThread = ({ comments, onAddComment }) => {
         <form onSubmit={handleSubmit} className="p-4 border-t border-gray-200 dark:border-gray-700">
           <div className="flex gap-3">
             <img
-              src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}`}
+              src={
+                user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}`
+              }
               alt={user.name}
               className="w-8 h-8 rounded-full object-cover flex-shrink-0"
             />
