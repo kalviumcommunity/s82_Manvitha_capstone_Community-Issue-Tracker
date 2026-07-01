@@ -62,23 +62,16 @@ exports.requestJoin = asyncHandler(async (req, res) => {
 // List pending join requests (Admin only)
 // --------------------
 exports.listPending = asyncHandler(async (req, res) => {
-  console.log(`[Pending Approvals Debug] User communityId: ${req.user.communityId}`);
-  
-  // Log all approvals in the system for comparison
-  const allApprovals = await Approval.find({});
-  console.log(`[Pending Approvals Debug] Total approvals in DB: ${allApprovals.length}`);
-  allApprovals.forEach(app => {
-    console.log(`  - Approval ID: ${app._id} | communityId: ${app.communityId} | requesterId: ${app.requesterId} | status: ${app.status} | type: ${app.type}`);
-  });
-
   const list = await Approval.find({
     communityId: req.user.communityId,
     status: 'PENDING',
     type: 'RESIDENT_JOIN',
   }).populate('requesterId', 'name email');
 
-  console.log(`[Pending Approvals Debug] Found ${list.length} matching pending approvals`);
-  res.json(list);
+  // Filter out any orphaned approvals where the requester user no longer exists
+  const activeList = list.filter(app => app.requesterId !== null);
+
+  res.json(activeList);
 });
 
 // --------------------

@@ -122,10 +122,13 @@ const ManageCommunity = () => {
         r.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const filteredPending = pendingApprovals.filter(r =>
-        r.requesterId?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        r.requesterId?.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredPending = pendingApprovals.filter(r => {
+        if (!r.requesterId) return false;
+        const name = r.requesterId.name || '';
+        const email = r.requesterId.email || '';
+        return name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               email.toLowerCase().includes(searchTerm.toLowerCase());
+    });
 
     return (
         <div className="p-4 lg:p-6 max-w-5xl mx-auto">
