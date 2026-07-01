@@ -13,11 +13,26 @@ app.use(express.json());
 app.use(cookieParser()); // ✅ add this before routes
 
 // Remove any other app.use(cors(...)) lines
+const allowedOrigins = [
+  "http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176",
+  "http://127.0.0.1:5173", "http://127.0.0.1:5174", "http://127.0.0.1:5175", "http://127.0.0.1:5176"
+];
+
 app.use(cors({
-  origin: [
-    "http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176",
-    "http://127.0.0.1:5173", "http://127.0.0.1:5174", "http://127.0.0.1:5175", "http://127.0.0.1:5176"
-  ],
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, postman, or curl)
+    if (!origin) return callback(null, true);
+    
+    const isAllowed = allowedOrigins.includes(origin) || 
+                      origin.endsWith('.netlify.app') || 
+                      origin.includes('netlify.app');
+                      
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      callback(null, false); // Block other origins safely without crashing
+    }
+  },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "Cookie"]
