@@ -15,7 +15,8 @@ app.use(cookieParser()); // ✅ add this before routes
 // Remove any other app.use(cors(...)) lines
 const allowedOrigins = [
   "http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176",
-  "http://127.0.0.1:5173", "http://127.0.0.1:5174", "http://127.0.0.1:5175", "http://127.0.0.1:5176"
+  "http://127.0.0.1:5173", "http://127.0.0.1:5174", "http://127.0.0.1:5175", "http://127.0.0.1:5176",
+  "https://visionary-douhua-a7e11b.netlify.app"
 ];
 
 app.use(cors({
