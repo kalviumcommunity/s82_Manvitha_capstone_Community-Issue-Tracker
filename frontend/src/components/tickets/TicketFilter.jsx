@@ -18,10 +18,10 @@ const TicketFilter = ({ onFilter }) => {
     Cookies.set('ticketFilters', JSON.stringify(filters), { expires: 7 }); // lasts 7 days
   }, [filters]);
 
-  // Trigger parent update on mount
+  // Trigger parent update on mount and when filters change
   useEffect(() => {
     onFilter(filters);
-  }, []); // run once on load
+  }, [filters, onFilter]);
 
   const handleSearchChange = (e) => {
     const newFilters = { ...filters, search: e.target.value };

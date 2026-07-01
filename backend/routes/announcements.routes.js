@@ -4,11 +4,15 @@ const rbac = require('../middlewares/rbac');
 const c = require('../controllers/announcements.controller');
 
 router.use(auth);
-router.post('/', rbac('PRESIDENT','SECRETARY'), c.create);
+
+// Admin-only actions
+router.post('/', rbac('PRESIDENT'), c.create);
+router.put('/:id', rbac('PRESIDENT'), c.update);
+router.delete('/:id', rbac('PRESIDENT'), c.remove);
+router.patch('/:id/pin', rbac('PRESIDENT'), c.pin);
+
+// Accessible to all logged-in users
 router.get('/', c.list);
 router.get('/:id', c.one);
-router.put('/:id', rbac('PRESIDENT','SECRETARY'), c.update);
-router.delete('/:id', rbac('PRESIDENT','SECRETARY'), c.remove);
-router.patch('/:id/pin', rbac('PRESIDENT','SECRETARY'), c.pin);
 
 module.exports = router;

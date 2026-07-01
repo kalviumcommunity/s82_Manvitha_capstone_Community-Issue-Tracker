@@ -1,17 +1,19 @@
 // src/components/RoleRedirect.jsx
 import React from "react";
 import { Navigate } from "react-router-dom";
-import Cookies from "js-cookie";
+// import Cookies from "js-cookie"; // Unused
+import { useAuth } from "../contexts/AuthContext";
 
 const RoleRedirect = () => {
-  // Get role from cookies instead of localStorage
-  const role = Cookies.get("role");
+  const { user, loading } = useAuth();
 
-  if (role === "president") return <Navigate to="/president" replace />;
-  if (role === "vice-president") return <Navigate to="/vice-president" replace />;
-  if (role === "resident") return <Navigate to="/resident" replace />;
+  if (loading) return <div>Loading...</div>; // Or a spinner
+  if (!user) return <Navigate to="/" replace />; // Login page
 
-  return <Navigate to="/login" replace />;
+  if (user.role === "PRESIDENT") return <Navigate to="/president/dashboard" replace />;
+  if (user.role === "RESIDENT") return <Navigate to="/resident/dashboard" replace />;
+
+  return <Navigate to="/resident/dashboard" replace />; // Default fallback
 };
 
 export default RoleRedirect;

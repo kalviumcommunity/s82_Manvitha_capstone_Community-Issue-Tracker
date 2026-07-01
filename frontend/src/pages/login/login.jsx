@@ -1,55 +1,48 @@
 import React, { useState } from "react";
-import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
+// import axios from "axios"; // Unused now
 
 const Login = () => {
-  const [mail, setMail] = useState("");
+  const [email, setEmail] = useState(""); // Changed from mail to email
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const { login } = useAuth(); // Use context
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError("");
     try {
-      const res = await axios.post("http://localhost:3551/api/auth/login", {
-        mail,
-        password,
-      }, { withCredentials: true }); // Important: This sends/receives cookies
+      // Use AuthContext login method
+      const user = await login(email, password);
 
-      alert("Login successful");
-      console.log(res);
-
-      // No more localStorage! The browser handles the cookie.
-      // We navigate based on the role sent back from the server.
-      const role = res.data.role;
-      if (role === "president") {
+      // Navigate based on user role
+      if (user.role === "PRESIDENT") {
         navigate("/president/dashboard");
-      } else if (role === "vice-president") {
-        navigate("/vice-president/dashboard");
-      } else if (role === "resident") {
-        navigate("/resident/dashboard");
       } else {
-        alert("Role not recognized");
-        navigate("/login");
+        navigate("/resident/dashboard");
       }
     } catch (err) {
-      alert(err.response?.data?.message || "Login failed");
+      setError("Invalid credentials");
     }
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
-      <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-md w-full max-w-md">
+      <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-md w-full max-w-md border dark:border-gray-700">
         <h2 className="text-2xl font-bold text-center text-gray-900 dark:text-white mb-6">
-          Login
+          Welcome Back
         </h2>
+        {error && <p className="bg-red-500 text-white text-center p-2 rounded mb-4 text-sm">{error}</p>}
         <form onSubmit={handleLogin} className="space-y-4">
           <input
             type="email"
-            placeholder="Email"
-            value={mail}
-            onChange={(e) => setMail(e.target.value)}
+            placeholder="Email Address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:text-white"
           />
           <input
             type="password"
@@ -57,22 +50,19 @@ const Login = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:text-white"
           />
           <button
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition duration-200"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md transition duration-200"
           >
             Login
           </button>
         </form>
         <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-300">
-          Don't have an account?{" "}
-          <Link
-            to="/signup"
-            className="text-blue-600 hover:underline dark:text-blue-400"
-          >
-            Sign up
+          New here?{" "}
+          <Link to="/signup" className="text-blue-600 hover:underline dark:text-blue-400 font-medium">
+            Create an account
           </Link>
         </p>
       </div>

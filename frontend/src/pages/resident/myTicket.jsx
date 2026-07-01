@@ -1,115 +1,122 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Loader2 } from 'lucide-react';
 import TicketCard from '../../components/tickets/TicketCard';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { useNotifications } from '../../contexts/NotificationContext';
+
+// Configure instance for this file (or use your central api.js)
+const api = axios.create({
+  baseURL: 'http://localhost:3551/api/v1',
+  withCredentials: true,
+});
 
 const MyTickets = () => {
   const navigate = useNavigate();
+  const { user } = useAuth(); // Use the authenticated user from Context
+  const { addNotification } = useNotifications();
   const [tickets, setTickets] = useState([]);
-  const [filteredTickets, setFilteredTickets] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const userDataString = localStorage.getItem('user');
-    if (userDataString) {
-      const user = JSON.parse(userDataString);
-      if (user?.id) {
+    const fetchMyTickets = async () => {
+      try {
         setLoading(true);
-        axios.post('http://localhost:3551/api/issues/', { userId: user.id })
-          .then(res => {
-            setTickets(res.data);
-            setFilteredTickets(res.data);
-            setLoading(false);
-          })
-          .catch(err => {
-            console.error('Failed to fetch tickets:', err);
-            setError('Failed to load tickets. Please try again later.');
-            setLoading(false);
-          });
-      } else {
-        setError('User ID not found in local storage');
+        // Your backend has: exports.my = asyncHandler(async (req, res) => ...
+        // and route: router.get('/my', c.my);
+        const res = await api.get('/issues/my');
+        setTickets(res.data);
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch tickets:', err);
+        setError(err.response?.data?.message || 'Failed to load your tickets.');
+      } finally {
+        setLoading(false);
       }
-    } else {
-      setError('User not logged in');
+    };
+
+    if (user) {
+      fetchMyTickets();
     }
-  }, []);
+  }, [user]);
 
   const handleEdit = (ticket) => {
+    // Navigates to NewTicket and passes the ticket object to fill the form
     navigate('/resident/new-ticket', { state: { ticketToEdit: ticket } });
   };
 
   const handleDelete = async (ticketId) => {
     if (!window.confirm("Are you sure you want to delete this ticket?")) return;
     try {
-      await axios.delete(`http://localhost:3551/api/issues/:id/${ticketId}`);
-      const updatedTickets = tickets.filter(ticket => ticket._id !== ticketId);
-      setTickets(updatedTickets);
-      setFilteredTickets(updatedTickets);
+      // Backend route: router.delete('/:id', rbac('PRESIDENT','SECRETARY'), c.remove);
+      // Note: Check your backend RBAC, if Resident can't delete, this will 403.
+      await api.delete(`/issues/${ticketId}`);
+      setTickets(prev => prev.filter(t => t._id !== ticketId));
+      addNotification({ title: 'Success', message: 'Ticket deleted successfully', type: 'success' });
     } catch (err) {
       console.error("Error deleting ticket:", err);
-      alert("Failed to delete the ticket. Please try again.");
+      addNotification({ 
+        title: 'Error', 
+        message: err.response?.data?.message || "Failed to delete the ticket.", 
+        type: 'error' 
+      });
     }
   };
 
-  const handleFilter = (filters) => {
-    let result = [...tickets];
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
-      result = result.filter(ticket =>
-        ticket.title.toLowerCase().includes(searchLower) ||
-        (ticket.description && ticket.description.toLowerCase().includes(searchLower))
-      );
-    }
-    if (filters.categories.length > 0) {
-      result = result.filter(ticket => filters.categories.includes(ticket.category));
-    }
-    if (filters.priorities.length > 0) {
-      result = result.filter(ticket => filters.priorities.includes(ticket.priority || ''));
-    }
-    if (filters.statuses.length > 0) {
-      result = result.filter(ticket => filters.statuses.includes(ticket.status));
-    }
-    setFilteredTickets(result);
-  };
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center p-20">
+        <Loader2 className="animate-spin h-10 w-10 text-blue-500" />
+        <p className="mt-4 text-gray-500">Fetching your issues...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 lg:p-6">
-      {loading && <p className="text-center text-gray-500 dark:text-gray-400">Loading tickets...</p>}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Reported Issues</h1>
+        <button
+          onClick={() => navigate('/resident/new-ticket')}
+          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          <PlusCircle size={18} />
+          <span>New Ticket</span>
+        </button>
+      </div>
 
-      {error && <p className="text-center text-red-600 dark:text-red-400">{error}</p>}
-
-      {!loading && !error && filteredTickets.length === 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 text-center">
-          <p className="text-gray-600 dark:text-gray-400 mb-4">You don't have any tickets yet.</p>
-          <button
-            onClick={() => navigate('/resident/new-ticket')}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/20 hover:bg-blue-200 dark:hover:bg-blue-900/40 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            <PlusCircle size={16} className="mr-2" />
-            Create your first ticket
-          </button>
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg mb-6">
+          {error}
         </div>
       )}
 
-      {!loading && !error && filteredTickets.length > 0 && (
-        <>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-            Showing {filteredTickets.length} ticket{filteredTickets.length !== 1 ? 's' : ''}
-          </p>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {filteredTickets.map(ticket => (
-              <div key={ticket._id} className="bg-gray-800 p-4 rounded-lg shadow">
-                <TicketCard
-                  ticket={ticket}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                />
-              </div>
-            ))}
+      {tickets.length === 0 ? (
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-12 text-center">
+          <div className="mx-auto w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+            <PlusCircle size={32} className="text-gray-400" />
           </div>
-        </>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">You haven't reported any issues yet.</p>
+          <button
+            onClick={() => navigate('/resident/new-ticket')}
+            className="text-blue-600 font-medium hover:underline"
+          >
+            Create your first ticket
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {tickets.map(ticket => (
+            <TicketCard
+              key={ticket._id}
+              ticket={ticket}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+          ))}
+        </div>
       )}
     </div>
   );

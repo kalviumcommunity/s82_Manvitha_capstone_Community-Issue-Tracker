@@ -1,173 +1,273 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
+// import axios from "axios"; // Unused now
 
 const Signup = () => {
   const [formData, setFormData] = useState({
-    name: '',
-    mail: '',
-    password: '',
-    role: 'resident',
-    colonyName: '',
-    colony: '' // This will store the selected colony's ID
+    name: "",
+    email: "",
+    password: "",
+    phoneNumber: "",
+    houseNo: "",
+    ownerName: "",
+    role: "PRESIDENT",
   });
 
-  const [colonies, setColonies] = useState([]);
-  const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [error, setError] = useState("");
+  const { signup } = useAuth(); // Use context
   const navigate = useNavigate();
-
-  // Fetch the list of available colonies when the component loads
-  useEffect(() => {
-    const fetchColonies = async () => {
-      try {
-        const res = await axios.get('http://localhost:3551/api/auth/colonies');
-        setColonies(res.data);
-      } catch (err) {
-        console.error('Error fetching colonies:', err);
-        setError('Could not load the list of colonies. Please try again later.');
-      }
-    };
-    fetchColonies();
-  }, []); // The empty dependency array ensures this runs only once
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (fieldErrors[e.target.name]) {
+      setFieldErrors(prev => {
+        const copy = { ...prev };
+        delete copy[e.target.name];
+        return copy;
+      });
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(''); // Clear previous errors
+    
+    // Client-side validation checks
+    const errors = {};
+    if (formData.name.trim().length < 3) {
+      errors.name = 'Full name must be at least 3 characters.';
+    }
+    if (!formData.email.trim() || !/\S+@\S+\.\S+/.test(formData.email)) {
+      errors.email = 'Please enter a valid email address.';
+    }
+    if (formData.password.length < 6) {
+      errors.password = 'Password must be at least 6 characters.';
+    }
+    if (!formData.phoneNumber.trim()) {
+      errors.phoneNumber = 'Phone number is required.';
+    }
+    if (formData.role === 'RESIDENT') {
+      if (!formData.communityId) {
+        errors.communityId = 'Please select a community.';
+      }
+      if (!formData.houseNo.trim()) {
+        errors.houseNo = 'House/flat number is required.';
+      }
+      if (!formData.ownerName.trim()) {
+        errors.ownerName = 'Owner name is required.';
+      }
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
+
+    setFieldErrors({});
+    setError("");
 
     try {
-      // Construct the data payload to send to the server
-      const payload = {
-        name: formData.name,
-        mail: formData.mail,
-        password: formData.password,
-        role: formData.role,
-      };
+      // Use AuthContext signup method
+      const user = await signup(formData); // This now auto-logs them in
 
-      // Conditionally add the colony name based on the user's role
-      if (formData.role === 'president') {
-        payload.colonyName = formData.colonyName;
+      // Navigate based on role directly to dashboard
+      if (user.role === "PRESIDENT") {
+        navigate("/president/dashboard");
       } else {
-        // For residents, find the full colony object to get its name
-        const selectedColony = colonies.find(c => c._id === formData.colony);
-        if (!selectedColony) {
-          setError('Please select a valid colony.');
-          return;
-        }
-        payload.colonyName = selectedColony.name;
+        navigate("/resident/dashboard");
       }
 
-      // ✅ The most important change is here:
-      // Send the request with credentials to allow cookie handling
-      const res = await axios.post('http://localhost:3551/api/auth/signup', payload, {
-        withCredentials: true
-      });
-
-      // We no longer need to store the token or role in localStorage
-      alert('Signup successful!');
-
-      // Navigate to the correct dashboard based on the role from the server's response
-      navigate(`/${res.data.role}/dashboard`);
-
     } catch (err) {
-      // Display a user-friendly error message from the server response
-      const errorMessage = err.response?.data?.message || 'Signup failed. Please try again.';
-      setError(errorMessage);
-      alert(errorMessage);
+      console.error(err);
+      const errMsg = err.message || "Signup failed";
+      
+      // Map server validation / duplicate errors
+      if (errMsg.toLowerCase().includes('email')) {
+        setFieldErrors({ email: 'Email address is already registered.' });
+      } else if (errMsg.toLowerCase().includes('password')) {
+        setFieldErrors({ password: 'Password must be at least 6 characters.' });
+      } else if (errMsg.toLowerCase().includes('name')) {
+        setFieldErrors({ name: 'Full name must be at least 3 characters.' });
+      } else {
+        setError(errMsg);
+      }
     }
   };
 
+  // Fetch communities for dropdown
+  const [communities, setCommunities] = useState([]);
+
+  React.useEffect(() => {
+    const fetchCommunities = async () => {
+      try {
+        const res = await import("axios").then(m => m.default.get("http://localhost:3551/api/v1/communities/public"));
+        setCommunities(res.data);
+      } catch (err) {
+        console.error("Failed to load communities", err);
+      }
+    };
+    fetchCommunities();
+  }, []);
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
-      <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-md">
-        <h2 className="text-3xl font-bold text-center text-gray-900 dark:text-white mb-6">Create an Account</h2>
-        {error && <p className="bg-red-500 text-white text-center p-3 rounded-md mb-4">{error}</p>}
+      <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-md border dark:border-gray-700">
+        <h2 className="text-3xl font-bold text-center text-gray-900 dark:text-white mb-6">Join Community Hub</h2>
+        {error && <p className="bg-red-500 text-white text-center p-2 rounded mb-4 text-sm">{error}</p>}
+
         <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            name="name"
-            type="text"
-            placeholder="Full Name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-            className="w-full px-4 py-2 border rounded-md dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
-          />
-          <input
-            name="mail"
-            type="email"
-            placeholder="Email Address"
-            value={formData.mail}
-            onChange={handleChange}
-            required
-            className="w-full px-4 py-2 border rounded-md dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
-          />
-          <input
-            name="password"
-            type="password"
-            placeholder="Password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-            className="w-full px-4 py-2 border rounded-md dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
-          />
-
-          <select
-            name="role"
-            value={formData.role}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border rounded-md dark:bg-gray-700 dark:text-white"
-          >
-            <option value="resident">I am a Resident</option>
-            <option value="president">I am a President (Creating a new colony)</option>
-          </select>
-
-          {formData.role === 'president' && (
+          <div>
             <input
-              name="colonyName"
-              type="text"
-              placeholder="Enter New Colony Name"
-              value={formData.colonyName}
+              name="name"
+              placeholder="Full Name"
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border rounded-md dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
+              className={`w-full px-4 py-2 border rounded-md dark:bg-gray-700 dark:text-white border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none ${
+                fieldErrors.name ? 'border-red-500 dark:border-red-500 focus:ring-red-500' : ''
+              }`}
             />
-          )}
+            {fieldErrors.name && (
+              <p className="mt-1 text-xs text-red-500 font-medium">{fieldErrors.name}</p>
+            )}
+          </div>
 
-          {formData.role === 'resident' && (
-            <select
-              name="colony"
-              value={formData.colony}
+          <div>
+            <input
+              name="email"
+              type="email"
+              placeholder="Email Address"
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border rounded-md dark:bg-gray-700 dark:text-white"
-            >
-              <option value="">-- Select Your Colony --</option>
-              {colonies.map((colony) => (
-                <option key={colony._id} value={colony._id}>{colony.name}</option>
-              ))}
-            </select>
-          )}
+              className={`w-full px-4 py-2 border rounded-md dark:bg-gray-700 dark:text-white border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none ${
+                fieldErrors.email ? 'border-red-500 dark:border-red-500 focus:ring-red-500' : ''
+              }`}
+            />
+            {fieldErrors.email && (
+              <p className="mt-1 text-xs text-red-500 font-medium">{fieldErrors.email}</p>
+            )}
+          </div>
+
+          <div>
+            <input
+              name="password"
+              type="password"
+              placeholder="Password"
+              onChange={handleChange}
+              required
+              className={`w-full px-4 py-2 border rounded-md dark:bg-gray-700 dark:text-white border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none ${
+                fieldErrors.password ? 'border-red-500 dark:border-red-500 focus:ring-red-500' : ''
+              }`}
+            />
+            {fieldErrors.password && (
+              <p className="mt-1 text-xs text-red-500 font-medium">{fieldErrors.password}</p>
+            )}
+          </div>
+
+          <div>
+            <input
+              name="phoneNumber"
+              placeholder="Phone Number"
+              onChange={handleChange}
+              required
+              className={`w-full px-4 py-2 border rounded-md dark:bg-gray-700 dark:text-white border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none ${
+                fieldErrors.phoneNumber ? 'border-red-500 dark:border-red-500 focus:ring-red-500' : ''
+              }`}
+            />
+            {fieldErrors.phoneNumber && (
+              <p className="mt-1 text-xs text-red-500 font-medium">{fieldErrors.phoneNumber}</p>
+            )}
+          </div>
+
+          <div className="py-2 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">I am a:</label>
+              <select
+                name="role"
+                value={formData.role}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border rounded-md dark:bg-gray-700 dark:text-white border-gray-300 dark:border-gray-600"
+              >
+                <option value="RESIDENT">Resident</option>
+                <option value="PRESIDENT">President (Admin)</option>
+              </select>
+            </div>
+
+            {formData.role === "RESIDENT" && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select Community:</label>
+                  <select
+                    name="communityId"
+                    value={formData.communityId || ""}
+                    onChange={handleChange}
+                    required
+                    className={`w-full px-4 py-2 border rounded-md dark:bg-gray-700 dark:text-white border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none ${
+                      fieldErrors.communityId ? 'border-red-500 dark:border-red-500 focus:ring-red-500' : ''
+                    }`}
+                  >
+                    <option value="" disabled>-- Choose a Community --</option>
+                    {communities.map(c => (
+                      <option key={c._id} value={c._id}>
+                        {c.name} {c.location?.city ? `(${c.location.city})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                  {fieldErrors.communityId && (
+                    <p className="mt-1 text-xs text-red-500 font-medium">{fieldErrors.communityId}</p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">House/Flat No:</label>
+                    <input
+                      name="houseNo"
+                      placeholder="e.g., A-101"
+                      onChange={handleChange}
+                      required
+                      className={`w-full px-4 py-2 border rounded-md dark:bg-gray-700 dark:text-white border-gray-300 dark:border-gray-600 ${
+                        fieldErrors.houseNo ? 'border-red-500 dark:border-red-500 focus:ring-red-500' : ''
+                      }`}
+                    />
+                    {fieldErrors.houseNo && (
+                      <p className="mt-1 text-xs text-red-500 font-medium">{fieldErrors.houseNo}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Owner Name:</label>
+                    <input
+                      name="ownerName"
+                      placeholder="Property Owner"
+                      onChange={handleChange}
+                      required
+                      className={`w-full px-4 py-2 border rounded-md dark:bg-gray-700 dark:text-white border-gray-300 dark:border-gray-600 ${
+                        fieldErrors.ownerName ? 'border-red-500 dark:border-red-500 focus:ring-red-500' : ''
+                      }`}
+                    />
+                    {fieldErrors.ownerName && (
+                      <p className="mt-1 text-xs text-red-500 font-medium">{fieldErrors.ownerName}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
 
           <button
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-md transition duration-200"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-md transition"
           >
-            Sign Up
+            Create Account
           </button>
         </form>
 
         <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-300">
-          Already have an account?{' '}
-          <Link to="/login" className="font-medium text-blue-600 hover:underline dark:text-blue-400">
-            Login
-          </Link>
+          Already have an account? <Link to="/" className="text-blue-600 hover:underline">Login</Link>
         </p>
       </div>
     </div>
   );
 };
 
-export default Signup;
+export default Signup;    

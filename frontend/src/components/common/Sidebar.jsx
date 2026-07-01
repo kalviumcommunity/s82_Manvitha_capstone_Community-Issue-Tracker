@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import React, { useState } from 'react';
+import { NavLink, useNavigate, Link } from 'react-router-dom';
+// import axios from 'axios'; // Unused
 import {
   Home,
   MessageSquare,
@@ -10,19 +10,21 @@ import {
   X,
   LogOut,
   Loader2,
+  Users,
+  User,
 } from 'lucide-react';
 
-// ✅ Set axios to always include cookies
-axios.defaults.withCredentials = true;
+import { useAuth } from '../../contexts/AuthContext';
+
+// axios.defaults.withCredentials = true; // Handled in AuthContext endpoint calls or global config
 
 const SidebarLink = ({ to, icon, text }) => (
   <NavLink
     to={to}
     className={({ isActive }) =>
-      `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-        isActive
-          ? 'bg-blue-500 text-white shadow'
-          : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+      `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${isActive
+        ? 'bg-blue-500 text-white shadow'
+        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
       }`
     }
   >
@@ -32,12 +34,13 @@ const SidebarLink = ({ to, icon, text }) => (
 );
 
 const roleLinks = {
-  president: [
+  PRESIDENT: [
     { to: '/president/dashboard', icon: <Home size={20} />, text: 'Dashboard' },
-    { to: '/president/all-tickets', icon: <MessageSquare size={20} />, text: 'All Tickets' },
+    { to: '/president/tickets', icon: <MessageSquare size={20} />, text: 'All Tickets' },
     { to: '/president/announcements', icon: <Bell size={20} />, text: 'Announcements' },
+    { to: '/president/manage-community', icon: <Users size={20} />, text: 'Manage Community' },
   ],
-  resident: [
+  RESIDENT: [
     { to: '/resident/dashboard', icon: <Home size={20} />, text: 'Dashboard' },
     { to: '/resident/new-ticket', icon: <PlusCircle size={20} />, text: 'New Ticket' },
     { to: '/resident/my-tickets', icon: <MessageSquare size={20} />, text: 'My Tickets' },
@@ -46,55 +49,24 @@ const roleLinks = {
 };
 
 const Sidebar = () => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading, logout } = useAuth(); // Use context
+  // const [user, setUser] = useState(null); // Removed
+  // const [loading, setLoading] = useState(true); // Removed
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchCurrentUser = async () => {
-      try {
-        const res = await axios.get('http://localhost:3551/api/auth/me');
-        setUser(res.data);
-      } catch (err) {
-        // ✅ START OF FIX
-        // Only redirect if the error is an actual authentication error (401 or 403)
-        // This prevents redirect loops on a 500 server error.
-        if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-          console.error('❌ Not authenticated — redirecting to login.');
-          navigate('/login');
-        } else {
-          // It's a 500 server error or a network error.
-          console.error('Failed to fetch user (Server Error):', err);
-          // We don't redirect here, as it would cause an infinite loop.
-          // You might want to set an error state to show a "Can't connect" message.
-        }
-        // ✅ END OF FIX
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCurrentUser();
-  }, [navigate]);
+  // useEffect for fetching user REMOVED - AuthContext handles it
 
   const handleLogout = async () => {
-    try {
-      await axios.post('http://localhost:3551/auth/logout');
-      setUser(null);
-      navigate('/login');
-    } catch (err) {
-      console.error('Logout failed:', err);
-      // Navigate to login regardless of logout error
-      navigate('/login');
-    }
+    await logout();
+    navigate('/');
   };
 
   if (loading) {
     return (
       <aside className="fixed top-0 left-0 h-full w-64 bg-white dark:bg-gray-800 shadow-lg z-40 flex flex-col items-center justify-center">
         <Loader2 className="animate-spin h-8 w-8 text-blue-500" />
-        <p className="mt-2 text-gray-500 dark:text-gray-400">Authenticating...</p>
+        <p className="mt-2 text-gray-500 dark:text-gray-400">Loading...</p>
       </aside>
     );
   }
@@ -122,9 +94,8 @@ const Sidebar = () => {
       )}
 
       <aside
-        className={`fixed top-0 left-0 h-full w-64 bg-white dark:bg-gray-800 shadow-lg z-40 transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        }`}
+        className={`fixed top-0 left-0 h-full w-64 bg-white dark:bg-gray-800 shadow-lg z-40 transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+          }`}
       >
         <div className="flex flex-col h-full">
           <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
@@ -140,7 +111,11 @@ const Sidebar = () => {
             </button>
           </div>
 
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+          <Link
+            to="/profile"
+            onClick={() => setIsOpen(false)}
+            className="p-4 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors block"
+          >
             <div className="flex items-center gap-3">
               <img
                 src={
@@ -150,12 +125,12 @@ const Sidebar = () => {
                 alt={user.name}
                 className="w-10 h-10 rounded-full object-cover"
               />
-              <div>
-                <p className="font-medium text-gray-900 dark:text-white">{user.name}</p>
+              <div className="overflow-hidden">
+                <p className="font-medium text-gray-900 dark:text-white truncate">{user.name}</p>
                 <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">{user.role}</p>
               </div>
             </div>
-          </div>
+          </Link>
 
           <nav className="flex-1 overflow-y-auto p-3 space-y-1">
             {links.map((link) => (

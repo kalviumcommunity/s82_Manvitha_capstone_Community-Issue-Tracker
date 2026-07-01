@@ -3,8 +3,8 @@ const express = require('express');
 const http = require('http');
 const cors = require('cors');
 const morgan = require('morgan');
-const cookieParser = require('cookie-parser'); // ✅ add this
-const { Server } = require('socket.io');
+const cookieParser = require('cookie-parser');
+// const { Server } = require('socket.io'); // Moved to socket.js
 
 const connectDB = require('./config/db');
 
@@ -12,9 +12,15 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser()); // ✅ add this before routes
 
+// Remove any other app.use(cors(...)) lines
 app.use(cors({
-  origin: process.env.FRONTEND_URL, // http://localhost:5173
-  credentials: true, // ✅ allows sending cookies
+  origin: [
+    "http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176",
+    "http://127.0.0.1:5173", "http://127.0.0.1:5174", "http://127.0.0.1:5175", "http://127.0.0.1:5176"
+  ],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "Cookie"]
 }));
 
 app.use(morgan('dev'));
@@ -36,22 +42,32 @@ app.use('/api/v1/comments', require('./routes/comments.routes'));
 app.use('/api/v1/complaints', require('./routes/complaints.routes'));
 app.use('/api/v1/staff', require('./routes/staff.routes'));
 app.use('/api/v1/notifications', require('./routes/notifications.routes'));
+app.use('/api/v1', require('./routes/ai.routes'));
 
 // Global error handler (last)
 app.use((err, req, res, next) => {
   console.error('❌ Error:', err);
-  res.status(500).json({ message: err.message || 'Internal Server Error' });
+
+  // Handle Mongoose Validation Error
+  if (err.name === 'ValidationError') {
+    const messages = Object.values(err.errors).map(val => val.message);
+    const cleanMessage = messages.join('. ').replace(/`/g, "'");
+    return res.status(400).json({ message: cleanMessage });
+  }
+
+  // Handle Mongoose Duplicate Key Error
+  if (err.code && err.code === 11000) {
+    const field = Object.keys(err.keyValue)[0];
+    const cleanField = field.charAt(0).toUpperCase() + field.slice(1);
+    return res.status(400).json({ message: `${cleanField} already exists.` });
+  }
+
+  res.status(err.status || 500).json({ message: err.message || 'Internal Server Error' });
 });
 
 const server = http.createServer(app);
-const io = new Server(server, {
-  cors: { origin: process.env.FRONTEND_URL, credentials: true },
-});
-
-io.on('connection', (socket) => {
-  console.log('🟢 Socket connected:', socket.id);
-  socket.on('disconnect', () => console.log('🔴 Socket disconnected'));
-});
+const socket = require('./socket');
+const io = socket.init(server);
 
 const PORT = process.env.PORT || 3551;
 server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

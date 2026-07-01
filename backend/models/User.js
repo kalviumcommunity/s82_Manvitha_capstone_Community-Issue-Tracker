@@ -1,24 +1,64 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
-const UserSchema = new Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true, index: true }, // ✅ correct field
-  passwordHash: { type: String, required: true },
-  role: { type: String, enum: ["PRESIDENT", "SECRETARY", "RESIDENT"], required: true },
-  communityId: { type: Schema.Types.ObjectId, ref: "Community" },
-  avatarUrl: String,
-  status: {
-    type: String,
-    enum: ["ACTIVE", "SUSPENDED", "DEACTIVATED"],
-    default: "ACTIVE"
+const UserSchema = new Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 100,
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+      lowercase: true,
+      trim: true,
+    },
+    passwordHash: {
+      type: String,
+      required: true,
+    },
+    phoneNumber: {
+      type: String,
+      trim: true,
+    },
+    role: {
+      type: String,
+      enum: ["PRESIDENT", "RESIDENT"], // ✅ secretary removed
+      required: true,
+      index: true,
+    },
+    communityId: {
+      type: Schema.Types.ObjectId,
+      ref: "Community",
+      index: true,
+    },
+    avatarUrl: {
+      type: String,
+      trim: true,
+    },
+    status: {
+      type: String,
+      enum: ["ACTIVE", "SUSPENDED", "DEACTIVATED"],
+      default: "ACTIVE",
+      index: true,
+    },
+    profile: {
+      houseNo: { type: String, trim: true },
+      block: { type: String, trim: true },
+      occupation: { type: String, trim: true },
+      ownerName: { type: String, trim: true },
+      dob: Date,
+    },
   },
-  profile: {
-    houseNo: String,
-    block: String,
-    occupation: String,
-    dob: Date
-  }
-}, { timestamps: true });
+  { timestamps: true }
+);
 
-module.exports = mongoose.models.User || mongoose.model("User", UserSchema);
+// Helpful compound index
+UserSchema.index({ communityId: 1, role: 1 });
+
+module.exports =
+  mongoose.models.User || mongoose.model("User", UserSchema);

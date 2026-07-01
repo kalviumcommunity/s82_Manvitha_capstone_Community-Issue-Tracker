@@ -1,12 +1,36 @@
 const Announcement = require('../models/Announcement');
+const User = require('../models/User');
+const NotificationController = require('./notifications.controller');
 const asyncHandler = require('../utils/asyncHandler');
 
 exports.create = asyncHandler(async (req, res) => {
+  if (!req.user.communityId) {
+    return res.status(400).json({ message: "Community ID missing. Please log out and log in again." });
+  }
+
   const a = await Announcement.create({
     ...req.body,
     communityId: req.user.communityId,
     authorId: req.user.id
   });
+
+  // Notify all residents
+  const residents = await User.find({
+    communityId: req.user.communityId,
+    role: 'RESIDENT'
+  });
+
+  residents.forEach(r => {
+    NotificationController.create({
+      userId: r._id,
+      communityId: req.user.communityId,
+      type: 'ANNOUNCEMENT',
+      title: 'New Announcement',
+      body: a.title,
+      link: '/resident/announcements'
+    });
+  });
+
   res.status(201).json(a);
 });
 exports.list = asyncHandler(async (req, res) => {

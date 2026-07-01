@@ -1,14 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle, User } from 'lucide-react';
+import { CheckCircle, User, Edit2, Trash2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import axios from 'axios';
+import { useAuth } from '../../contexts/AuthContext';
 
 const statusConfig = {
-  open: { color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300', label: 'Open' },
-  'in-progress': { color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300', label: 'In Progress' },
-  resolved: { color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300', label: 'Resolved' },
-  closed: { color: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300', label: 'Closed' },
+  OPEN: { color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300', label: 'Open' },
+  IN_PROGRESS: { color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300', label: 'In Progress' },
+  RESOLVED: { color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300', label: 'Resolved' },
+  CLOSED: { color: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300', label: 'Closed' },
 };
 
 const categoryEmoji = {
@@ -22,37 +22,23 @@ const categoryEmoji = {
 };
 
 const TicketCard = ({ ticket, compact = false, onEdit, onDelete }) => {
-  const [user, setUser] = useState(null);
-
-  // Fetch current user using secure cookie
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await axios.get('http://localhost:3551/api/auth/me', {
-          withCredentials: true, // send HttpOnly cookie
-        });
-        setUser(res.data);
-      } catch (err) {
-        console.warn('User not logged in or cookie invalid');
-        setUser(null);
-      }
-    };
-    fetchUser();
-  }, []);
+  const { user } = useAuth();
 
   if (!ticket) return null;
 
-  const status = statusConfig[ticket.status] || statusConfig.open;
+  const status = statusConfig[ticket.status.toUpperCase().replace('-', '_')] || statusConfig.OPEN;
   const ticketLink = `/tickets/${ticket._id}`;
   const comments = ticket.comments || [];
   const title = ticket.title || 'Untitled Ticket';
   const description = ticket.description || '';
   const category = categoryEmoji[ticket.category] || '📝';
-  const unit = ticket.unit || 'Unit not specified';
 
-  // Allow edit/delete only for admins or ticket owners
-  const canEdit = user && (user.role === 'president' || user._id === ticket.createdBy);
-  const canDelete = user && user.role === 'president';
+  // Allow edit/delete only for admins or ticket owners (case-insensitive checks)
+  const isPresident = user && user.role && user.role.toUpperCase() === 'PRESIDENT';
+  const isCreator = user && ticket.createdBy && String(user._id || user.id) === String(ticket.createdBy._id || ticket.createdBy);
+  const isResolvedOrClosed = ['RESOLVED', 'CLOSED'].includes(ticket.status.toUpperCase());
+  const canEdit = isPresident || (isCreator && !isResolvedOrClosed);
+  const canDelete = isPresident || (isCreator && !isResolvedOrClosed);
 
   return (
     <div className="relative group">
@@ -69,7 +55,10 @@ const TicketCard = ({ ticket, compact = false, onEdit, onDelete }) => {
                 {compact && title.length > 40 ? title.substring(0, 40) + '...' : title}
               </h3>
             </div>
-            <span className={`text-xs px-2 py-1 rounded-full ${status.color}`}>{status.label}</span>
+            {/* The status badge fades out on hover to make space for the actions */}
+            <span className={`text-xs px-2 py-1 rounded-full transition-opacity duration-200 ${(canEdit || canDelete) ? 'group-hover:opacity-0' : ''} ${status.color}`}>
+              {status.label}
+            </span>
           </div>
 
           {!compact && (
@@ -78,8 +67,7 @@ const TicketCard = ({ ticket, compact = false, onEdit, onDelete }) => {
             </p>
           )}
 
-          <div className="mt-3 flex items-center justify-between">
-            <div className="text-xs text-gray-500 dark:text-gray-400">{unit}</div>
+          <div className="mt-3 flex items-center justify-end">
             <div className="text-xs text-gray-500 dark:text-gray-400">
               {formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true })}
             </div>
@@ -103,9 +91,9 @@ const TicketCard = ({ ticket, compact = false, onEdit, onDelete }) => {
         </div>
       </Link>
 
-      {/* Edit / Delete buttons (only for allowed users) */}
+      {/* Edit / Delete buttons (fades in where the status badge was, avoiding clutter) */}
       {(canEdit || canDelete) && (
-        <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute top-3.5 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           {canEdit && onEdit && (
             <button
               onClick={(e) => {
@@ -113,9 +101,10 @@ const TicketCard = ({ ticket, compact = false, onEdit, onDelete }) => {
                 e.stopPropagation();
                 onEdit(ticket);
               }}
-              className="text-blue-600 hover:text-blue-800 text-sm"
+              className="p-1 bg-gray-50 dark:bg-gray-700 shadow-sm border border-gray-200 dark:border-gray-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded text-blue-600 dark:text-blue-400 hover:text-blue-700 transition-colors cursor-pointer"
+              title="Edit Ticket"
             >
-              Edit
+              <Edit2 size={13} />
             </button>
           )}
           {canDelete && onDelete && (
@@ -125,9 +114,10 @@ const TicketCard = ({ ticket, compact = false, onEdit, onDelete }) => {
                 e.stopPropagation();
                 onDelete(ticket._id);
               }}
-              className="text-red-600 hover:text-red-800 text-sm"
+              className="p-1 bg-gray-50 dark:bg-gray-700 shadow-sm border border-gray-200 dark:border-gray-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded text-red-600 dark:text-red-400 hover:text-red-700 transition-colors cursor-pointer"
+              title="Delete Ticket"
             >
-              Delete
+              <Trash2 size={13} />
             </button>
           )}
         </div>

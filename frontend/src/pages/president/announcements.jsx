@@ -1,352 +1,196 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Send, Calendar, PlusCircle, Trash, Edit, Eye } from 'lucide-react';
-import { mockAnnouncements } from '../../data/mockData';
+import React, { useState, useEffect } from 'react';
+// import { useNavigate } from 'react-router-dom'; // Unused
+import { ArrowLeft, Send, Calendar, PlusCircle, Trash, Edit, Loader2 } from 'lucide-react';
+import axios from 'axios';
 import AnnouncementBanner from '../../components/announcements/AnnouncementBanner';
-import { useAuth } from '../../contexts/AuthContext';
+// import { useAuth } from '../../contexts/AuthContext'; // Unused
 import { useNotifications } from '../../contexts/NotificationContext';
 
-const Announcements = () => {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const { addNotification } = useNotifications();
-  
-  const [announcements, setAnnouncements] = useState(mockAnnouncements);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [viewMode, setViewMode] = useState('all');
-  const [editingAnnouncement, setEditingAnnouncement] = useState(null);
+const api = axios.create({
+  baseURL: 'http://localhost:3551/api/v1',
+  withCredentials: true,
+});
 
-  
+const Announcements = () => {
+  // const navigate = useNavigate(); // Unused
+  // const { user } = useAuth(); // Unused
+  const { addNotification } = useNotifications();
+
+  const [announcements, setAnnouncements] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [formErrors, setFormErrors] = useState({ title: '', body: '' });
+
   const [formData, setFormData] = useState({
     title: '',
-    content: '',
-    important: false,
-    scheduledFor: '',
+    body: '', // Matches backend Schema field 'body'
+    pinned: false,
+    expiresAt: '',
   });
-  
-  const filteredAnnouncements = announcements.filter(announcement => {
-    if (viewMode === 'all') return true;
+
+  const fetchAnnouncements = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get('/announcements');
+      setAnnouncements(res.data);
+    } catch (err) {
+      console.error("Fetch error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchAnnouncements(); }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     
-    const hasScheduledDate = !!announcement.scheduledFor;
-    const scheduledDate = hasScheduledDate ? new Date(announcement.scheduledFor) : null;
-    const now = new Date();
-    
-    if (viewMode === 'scheduled') {
-      return hasScheduledDate && scheduledDate && scheduledDate > now;
+    // Front-end validation
+    const errors = {};
+    if (formData.title.trim().length < 5) {
+      errors.title = 'Title must be at least 5 characters long';
+    } else if (formData.title.length > 120) {
+      errors.title = 'Title cannot exceed 120 characters';
     }
     
-    if (viewMode === 'past') {
-      return !hasScheduledDate || (scheduledDate && scheduledDate <= now);
+    if (formData.body.trim().length < 10) {
+      errors.body = 'Content must be at least 10 characters long';
+    } else if (formData.body.length > 5000) {
+      errors.body = 'Content cannot exceed 5000 characters';
     }
-    
-    return true;
-  });
-  
-  const handleChange = (
-    e
-  ) => {
-    const { name, value, type } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? e.target.checked : value,
-    }));
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
+    try {
+      if (editingId) {
+        await api.put(`/announcements/${editingId}`, formData);
+        addNotification({ title: 'Updated', message: 'Announcement updated successfully.' });
+      } else {
+        await api.post('/announcements', formData);
+        addNotification({ title: 'Posted', message: 'New announcement is live.' });
+      }
+      setFormData({ title: '', body: '', pinned: false, expiresAt: '' });
+      setFormErrors({ title: '', body: '' });
+      setIsFormOpen(false);
+      setEditingId(null);
+      fetchAnnouncements();
+    } catch (err) {
+      console.error("Save error:", err);
+      const errMsg = err.response?.data?.message || "";
+      if (errMsg.includes("validation failed")) {
+        const backendErrors = {};
+        if (errMsg.toLowerCase().includes("title")) {
+          backendErrors.title = "Title is invalid (min 5 characters)";
+        }
+        if (errMsg.toLowerCase().includes("body")) {
+          backendErrors.body = "Content is invalid (min 10 characters)";
+        }
+        setFormErrors(backendErrors);
+      } else {
+        addNotification({ 
+          title: 'Error', 
+          message: err.response?.data?.message || "Failed to save announcement", 
+          type: 'error' 
+        });
+      }
+    }
   };
-  
- const handleSubmit = (e) => {
-  e.preventDefault();
 
-  if (editingAnnouncement) {
-    // Update existing announcement
-    setAnnouncements(prev =>
-      prev.map(a =>
-        a.id === editingAnnouncement.id
-          ? {
-              ...a,
-              title: formData.title,
-              content: formData.content,
-              important: formData.important,
-              scheduledFor: formData.scheduledFor
-                ? new Date(formData.scheduledFor).toISOString()
-                : undefined,
-              updatedAt: new Date().toISOString(),
-            }
-          : a
-      )
-    );
-
-    addNotification({
-      userId: user?.id || '',
-      title: 'Announcement Updated',
-      message: `Announcement "${formData.title}" has been updated successfully.`,
-      read: false,
-      type: 'announcement',
-    });
-
-  } else {
-    // Create new announcement
-    const newAnnouncement = {
-      id: `a${announcements.length + 1}`,
-      title: formData.title,
-      content: formData.content,
-      important: formData.important,
-      createdBy: user?.id || '',
-      createdAt: new Date().toISOString(),
-      scheduledFor: formData.scheduledFor
-        ? new Date(formData.scheduledFor).toISOString()
-        : undefined,
-    };
-
-    setAnnouncements(prev => [newAnnouncement, ...prev]);
-
-    addNotification({
-      userId: user?.id || '',
-      title: 'Announcement Created',
-      message: `Announcement "${formData.title}" has been created successfully.`,
-      read: false,
-      type: 'announcement',
-    });
-  }
-
-  // Reset form
-  setFormData({
-    title: '',
-    content: '',
-    important: false,
-    scheduledFor: '',
-  });
-  setIsFormOpen(false);
-  setEditingAnnouncement(null);
-};
-
-    
-    // Reset form
-   
-  const deleteAnnouncement = (id) => {
-    setAnnouncements(prev => prev.filter(announcement => announcement.id !== id));
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this announcement?")) return;
+    try {
+      await api.delete(`/announcements/${id}`);
+      setAnnouncements(prev => prev.filter(a => a._id !== id));
+      addNotification({ title: 'Success', message: 'Announcement deleted successfully.' });
+    } catch (error) { // Renamed or just ignore
+      console.error(error);
+      addNotification({ title: 'Error', message: "Delete failed", type: 'error' });
+    }
   };
-  
-  if (!user) return null;
-  
+
+  if (loading) return <div className="p-10 text-center"><Loader2 className="animate-spin mx-auto" /></div>;
+
   return (
     <div className="p-4 lg:p-6">
-      <div className="mb-6">
-        <button
-          onClick={() => navigate('/president')}
-          className="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-        >
-          <ArrowLeft size={16} className="mr-1" />
-          <span>Back to Dashboard</span>
-        </button>
-      </div>
-      
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-0">
-          Manage Announcements
-        </h1>
-        
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Manage Announcements</h1>
         <button
           onClick={() => setIsFormOpen(!isFormOpen)}
-          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
         >
-          {isFormOpen ? (
-            <>
-              <ArrowLeft size={16} className="mr-2" />
-              Cancel
-            </>
-          ) : (
-            <>
-              <PlusCircle size={16} className="mr-2" />
-              New Announcement
-            </>
-          )}
+          {isFormOpen ? <ArrowLeft size={18} /> : <PlusCircle size={18} />}
+          {isFormOpen ? 'Cancel' : 'New Post'}
         </button>
       </div>
-      
-      {isFormOpen && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
-          <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-            Create New Announcement
-          </h2>
-          
-          <form onSubmit={handleSubmit}>
-            <div className="space-y-4">
-              {/* Title */}
-              <div>
-                <label 
-                  htmlFor="title" 
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
-                  Title
-                </label>
-                <input
-                  type="text"
-                  id="title"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleChange}
-                  required
-                  placeholder="Enter announcement title"
-                  className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                />
-              </div>
-              
-              {/* Content */}
-              <div>
-                <label 
-                  htmlFor="content" 
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
-                  Content
-                </label>
-                <textarea
-                  id="content"
-                  name="content"
-                  value={formData.content}
-                  onChange={handleChange}
-                  required
-                  rows={4}
-                  placeholder="Enter announcement content"
-                  className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                />
-              </div>
-              
-              {/* Important checkbox & Schedule date */}
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="sm:w-1/2">
-                  <label 
-                    htmlFor="scheduledFor" 
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >
-                    Schedule for (optional)
-                  </label>
-                  <div className="mt-1 relative rounded-md shadow-sm">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Calendar size={16} className="text-gray-400" />
-                    </div>
-                    <input
-                      type="datetime-local"
-                      id="scheduledFor"
-                      name="scheduledFor"
-                      value={formData.scheduledFor}
-                      onChange={handleChange}
-                      className="pl-10 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    />
-                  </div>
-                </div>
-                
-                <div className="sm:w-1/2 flex items-center">
-                  <input
-                    type="checkbox"
-                    id="important"
-                    name="important"
-                    checked={formData.important}
-                    onChange={e => setFormData(prev => ({ ...prev, important: e.target.checked }))}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
-                  />
-                  <label 
-                    htmlFor="important" 
-                    className="ml-2 block text-sm text-gray-700 dark:text-gray-300"
-                  >
-                    Mark as important
-                  </label>
-                </div>
-              </div>
-              
-              {/* Submit button */}
-              <div className="flex justify-end">
-                <button
-                  type="submit"
-                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  <Send size={16} className="mr-2" />
-                  {formData.scheduledFor ? 'Schedule Announcement' : 'Post Announcement'}
-                </button>
-              </div>
-            </div>
-          </form>
-        </div>
-      )}
-      
-      {/* Filter tabs */}
-      <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6">
-        <button
-          onClick={() => setViewMode('all')}
-          className={`px-4 py-2 text-sm font-medium border-b-2 ${
-            viewMode === 'all'
-              ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-              : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-          }`}
-        >
-          All Announcements
-        </button>
-        <button
-          onClick={() => setViewMode('scheduled')}
-          className={`px-4 py-2 text-sm font-medium border-b-2 ${
-            viewMode === 'scheduled'
-              ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-              : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-          }`}
-        >
-          Scheduled
-        </button>
-        <button
-          onClick={() => setViewMode('past')}
-          className={`px-4 py-2 text-sm font-medium border-b-2 ${
-            viewMode === 'past'
-              ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-              : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-          }`}
-        >
-          Past Announcements
-        </button>
-      </div>
-      
-      {/* Announcements list */}
-      <div className="space-y-4">
-        {filteredAnnouncements.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 text-center">
-            <p className="text-gray-600 dark:text-gray-400">
-              No announcements found for the selected filter.
-            </p>
-          </div>
-        ) : (
-          filteredAnnouncements.map(announcement => (
-            <div 
-              key={announcement.id}
-              className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden"
-            >
-              <AnnouncementBanner announcement={announcement} detailed />
-              
-              <div className="px-4 py-3 bg-gray-50 dark:bg-gray-750 flex justify-end space-x-2">
-                <button 
-                  onClick={() => deleteAnnouncement(announcement.id)}
-                  className="p-1.5 rounded-md text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                >
-                  <Trash size={16} />
-                </button>
-               <button
-  onClick={() => {
-    setEditingAnnouncement(announcement);
-    setFormData({
-      title: announcement.title,
-      content: announcement.content,
-      important: announcement.important,
-      scheduledFor: announcement.scheduledFor
-        ? new Date(announcement.scheduledFor).toISOString().slice(0, 16)
-        : '',
-    });
-    setIsFormOpen(true);
-  }}
-  className="p-1.5 rounded-md text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
->
-  <Edit size={16} />
-</button>
 
-                
-              </div>
+      {isFormOpen && (
+        <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm mb-8 space-y-4 border dark:border-gray-700">
+          <div>
+            <input
+              placeholder="Title"
+              className={`w-full p-2 border rounded dark:bg-gray-700 dark:text-white ${
+                formErrors.title ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'dark:border-gray-600 focus:ring-blue-500'
+              }`}
+              value={formData.title}
+              onChange={e => {
+                setFormData({ ...formData, title: e.target.value });
+                if (formErrors.title) setFormErrors(prev => ({ ...prev, title: '' }));
+              }}
+              required
+            />
+            {formErrors.title && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.title}</p>}
+          </div>
+
+          <div>
+            <textarea
+              placeholder="Announcement content..."
+              className={`w-full p-2 border rounded dark:bg-gray-700 dark:text-white h-32 ${
+                formErrors.body ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'dark:border-gray-600 focus:ring-blue-500'
+              }`}
+              value={formData.body}
+              onChange={e => {
+                setFormData({ ...formData, body: e.target.value });
+                if (formErrors.body) setFormErrors(prev => ({ ...prev, body: '' }));
+              }}
+              required
+            />
+            {formErrors.body && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.body}</p>}
+          </div>
+          <div className="flex items-center gap-4">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={formData.pinned}
+                onChange={e => setFormData({ ...formData, pinned: e.target.checked })}
+              />
+              Pin to Top (Important)
+            </label>
+          </div>
+          <button type="submit" className="w-full bg-green-600 text-white py-2 rounded font-bold">
+            {editingId ? 'Update Announcement' : 'Publish Now'}
+          </button>
+        </form>
+      )}
+
+      <div className="space-y-4">
+        {announcements.map(a => (
+          <div key={a._id} className="relative group">
+            {/* Map 'body' to 'content' for the Banner component prop expectation */}
+            <AnnouncementBanner announcement={{ ...a, content: a.body, important: a.pinned }} detailed />
+            <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button onClick={() => {
+                setEditingId(a._id);
+                setFormData({ title: a.title, body: a.body, pinned: a.pinned });
+                setIsFormOpen(true);
+              }} className="p-2 bg-white shadow rounded-full text-blue-600"><Edit size={14} /></button>
+              <button onClick={() => handleDelete(a._id)} className="p-2 bg-white shadow rounded-full text-red-600"><Trash size={14} /></button>
             </div>
-          ))
-        )}
+          </div>
+        ))}
       </div>
     </div>
   );

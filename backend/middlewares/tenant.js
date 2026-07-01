@@ -1,5 +1,9 @@
-// Ensures communityId in resource matches authenticated user's community
 module.exports = (req, res, next) => {
-  req.communityId = req.user?.communityId || null; // helper
+  if (!req.user || !req.user.communityId) {
+    return res.status(403).json({ message: 'User not associated with a community' });
+  }
+
+  // Attach once so controllers can rely on it
+  req.communityId = req.user.communityId;
   next();
 };

@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Bell, Sun, Moon } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useNotifications } from '../../contexts/NotificationContext';
-import { useAuth } from '../../contexts/AuthContext';
+// import { useAuth } from '../../contexts/AuthContext'; // Unused
 import NotificationDropdown from './NotificationDropdown';
 import Cookies from 'js-cookie';
 
 const Navbar = () => {
   const { theme, toggleTheme } = useTheme();
   const { unreadCount } = useNotifications();
-  const { logout } = useAuth();
+  // const { logout } = useAuth(); // Unused
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [userName, setUserName] = useState('');
 
@@ -26,9 +26,6 @@ const Navbar = () => {
     }
   }, []);
 
-  const handleLogout = () => {
-    logout(); // clears cookies from AuthContext
-  };
 
   return (
     <header className="h-16 px-4 lg:pl-72 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm flex items-center justify-between sticky top-0 z-10">
@@ -44,7 +41,7 @@ const Navbar = () => {
           </span>
         )}
 
-      
+
 
         {/* Notifications */}
         <div className="relative">

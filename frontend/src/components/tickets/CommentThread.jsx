@@ -2,87 +2,123 @@ import React, { useEffect, useState } from 'react';
 import { Send } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import axios from 'axios';
+import { useNotifications } from '../../contexts/NotificationContext';
 
-const CommentThread = ({ comments, onAddComment }) => {
+const CommentThread = ({ ticketId }) => {
+  const { addNotification } = useNotifications();
+  const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Fetch logged-in user via secure cookie
+  // Fetch logged-in user & comments
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchData = async () => {
       try {
-        const res = await axios.get('http://localhost:3551/auth/me', {
-          withCredentials: true, // send HttpOnly cookie
-        });
-        setUser(res.data);
-      } catch (err) {
-        console.warn('User not logged in or cookie invalid.');
-        setUser(null);
+        const [userRes, commentsRes] = await Promise.all([
+          axios.get('http://localhost:3551/api/v1/auth/me', { withCredentials: true }),
+          axios.get(`http://localhost:3551/api/v1/issues/${ticketId}/comments`, { withCredentials: true })
+        ]);
+        setUser(userRes.data);
+        setComments(commentsRes.data || []);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        // Still allow viewing if user fetch fails (though unlikely with auth guard)
+      } finally {
+        setLoading(false);
       }
     };
-    fetchUser();
-  }, []);
 
-  const handleSubmit = (e) => {
+    if (ticketId) fetchData();
+  }, [ticketId]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (newComment.trim() && user) {
-      onAddComment(newComment);
+    if (!newComment.trim() || !user) return;
+
+    try {
+      const res = await axios.post(
+        `http://localhost:3551/api/v1/issues/${ticketId}/comment`,
+        { body: newComment },
+        { withCredentials: true }
+      );
+
+      const createdComment = res.data;
+
+      // Manually construct display object since the post response might not be populated
+      const displayComment = {
+        _id: createdComment._id,
+        body: createdComment.body,
+        createdAt: createdComment.createdAt,
+        authorId: {
+          _id: user.id || user._id,
+          name: user.name,
+          role: user.role,
+          avatar: user.avatar
+        }
+      };
+
+      setComments([...comments, displayComment]);
       setNewComment('');
+    } catch (err) {
+      console.error("Failed to post comment", err);
+      addNotification({ title: 'Error', message: 'Failed to post comment', type: 'error' });
     }
   };
 
-  if (!comments.length && !user) return null;
+  if (loading) return <div className="p-4 text-center text-gray-500">Loading comments...</div>;
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white">Comments</h3>
-      </div>
-
       {/* Comments list */}
       {comments.length > 0 ? (
         <div className="p-4 space-y-4">
-          {comments.map((comment) => (
-            <div key={comment.id} className="flex gap-3">
-              <img
-                src={
-                  comment.userAvatar ||
-                  `https://ui-avatars.com/api/?name=${encodeURIComponent(comment.userName)}`
-                }
-                alt={comment.userName}
-                className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-              />
-              <div className="flex-1">
-                <div className="flex justify-between items-center mb-1">
-                  <div>
-                    <span className="font-medium text-gray-900 dark:text-white">
-                      {comment.userName}
-                    </span>
-                    <span
-                      className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
-                        comment.userRole === 'president'
-                          ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
-                          : comment.userRole === 'vice-president'
-                          ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
-                          : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                      }`}
-                    >
-                      {comment.userRole.replace('-', ' ')}
+          {comments.map((comment) => {
+            const author = comment.authorId || {};
+            const userName = author.name || 'Unknown User';
+            const userRole = author.role || 'RESIDENT';
+
+            return (
+              <div key={comment._id || comment.id} className="flex gap-3">
+                <img
+                  src={
+                    author.avatar ||
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}`
+                  }
+                  alt={userName}
+                  className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                />
+                <div className="flex-1">
+                  <div className="flex justify-between items-center mb-1">
+                    <div>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {userName}
+                      </span>
+                      {userRole && (
+                        <span
+                          className={`ml-2 text-xs px-2 py-0.5 rounded-full ${userRole === 'PRESIDENT'
+                            ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
+                            : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                            }`}
+                        >
+                          {userRole === 'PRESIDENT' ? 'President' : 'Resident'}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {comment.createdAt ? formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true }) : 'Just now'}
                     </span>
                   </div>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
-                  </span>
-                </div>
-                <div className="text-gray-700 dark:text-gray-300 text-sm whitespace-pre-wrap">
-                  {comment.content}
+                  <div className="text-gray-700 dark:text-gray-300 text-sm whitespace-pre-wrap">
+                    {comment.body || comment.content}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
-        <div className="p-4 text-center text-gray-500 dark:text-gray-400">No comments yet.</div>
+        <div className="p-4 text-center text-gray-500 dark:text-gray-400">No comments yet. Be the first to verify or add info!</div>
       )}
 
       {/* Comment form */}
@@ -91,7 +127,7 @@ const CommentThread = ({ comments, onAddComment }) => {
           <div className="flex gap-3">
             <img
               src={
-                user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}`
+                user.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}`
               }
               alt={user.name}
               className="w-8 h-8 rounded-full object-cover flex-shrink-0"

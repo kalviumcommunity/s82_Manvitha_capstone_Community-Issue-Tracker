@@ -18,7 +18,7 @@ export const AuthProvider = ({ children }) => {
     const fetchUser = async () => {
       try {
         // The cookie is sent automatically by the browser
-        const res = await axios.get('http://localhost:3551/api/auth/me');
+        const res = await axios.get('http://localhost:3551/api/v1/auth/me');
         setUser(res.data);
       } catch (error) {
         console.log('No user logged in', error.response?.data?.message);
@@ -32,40 +32,34 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // ✅ Login
-  const login = async (mail, password) => {
-    setLoading(true);
+  const login = async (email, password) => {
     try {
       // The backend will send user data AND set the HttpOnly cookie
-      const res = await axios.post('http://localhost:3551/api/auth/login', { mail, password });
-      
+      const res = await axios.post('http://localhost:3551/api/v1/auth/login', { email, password });
+
       // The response data *is* the user object. There is no token.
-      setUser(res.data);
-      return res.data; // Return user for navigation
+      setUser(res.data.user); // Adjusted based on controller response structure { message, user }
+      return res.data.user;
 
     } catch (error) {
       setUser(null);
       throw new Error(error.response?.data?.message || 'Login failed');
-    } finally {
-      setLoading(false);
     }
   };
 
   // ✅ Signup
   const signup = async (formData) => {
-    setLoading(true);
     try {
       // The backend will send user data AND set the HttpOnly cookie
-      const res = await axios.post('http://localhost:3551/api/auth/signup', formData);
+      const res = await axios.post('http://localhost:3551/api/v1/auth/signup', formData);
 
       // The response data *is* the user object.
-      setUser(res.data);
-      return res.data; // Return user for navigation
+      setUser(res.data.user); // Adjusted based on controller response
+      return res.data.user; // Return user for navigation
 
     } catch (error) {
       setUser(null);
       throw new Error(error.response?.data?.message || 'Signup failed');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -73,7 +67,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       // We MUST call the backend to clear the HttpOnly cookie
-      await axios.post('http://localhost:3551/api/auth/logout');
+      await axios.post('http://localhost:3551/api/v1/auth/logout');
       setUser(null);
     } catch (error) {
       console.error('Logout failed:', error);
@@ -83,7 +77,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, setUser, loading, login, signup, logout }}>
       {!loading && children}
     </AuthContext.Provider>
   );

@@ -4,11 +4,15 @@ const rbac = require('../middlewares/rbac');
 const c = require('../controllers/maintenance.controller');
 
 router.use(auth);
-router.post('/generate', rbac('PRESIDENT','SECRETARY'), c.generate);
-router.get('/', rbac('PRESIDENT','SECRETARY'), c.list);
+
+// Admin-only (billing control)
+router.post('/generate', rbac('PRESIDENT'), c.generate);
+router.get('/', rbac('PRESIDENT'), c.list);
+router.post('/:id/mark-paid', rbac('PRESIDENT'), c.markPaid);
+router.post('/:id/waive', rbac('PRESIDENT'), c.waive);
+
+// Resident-accessible
 router.get('/my', c.my);
 router.get('/:id', c.one);
-router.post('/:id/mark-paid', rbac('PRESIDENT','SECRETARY'), c.markPaid);
-router.post('/:id/waive', rbac('PRESIDENT','SECRETARY'), c.waive);
 
 module.exports = router;
