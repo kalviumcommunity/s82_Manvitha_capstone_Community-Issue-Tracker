@@ -1,10 +1,11 @@
 import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 
 const ProtectedRoute = ({ allowedRoles }) => {
     const { user, loading } = useAuth();
+    const location = useLocation();
 
     if (loading) {
         return (
@@ -23,6 +24,11 @@ const ProtectedRoute = ({ allowedRoles }) => {
         // Redirect to their own dashboard if role not allowed
         const target = user.role === 'PRESIDENT' ? '/president/dashboard' : '/resident/dashboard';
         return <Navigate to={target} replace />;
+    }
+
+    // Enforce approval check: residents without communityId can ONLY access resident/dashboard
+    if (user.role === 'RESIDENT' && !user.communityId && location.pathname !== '/resident/dashboard') {
+        return <Navigate to="/resident/dashboard" replace />;
     }
 
     // Render child routes

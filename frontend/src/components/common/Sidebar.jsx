@@ -73,7 +73,9 @@ const Sidebar = () => {
 
   if (!user) return null;
 
-  const links = roleLinks[user.role] || [];
+  const links = user.role === 'RESIDENT' && !user.communityId
+    ? [{ to: '/resident/dashboard', icon: <Home size={20} />, text: 'Dashboard' }]
+    : (roleLinks[user.role] || []);
 
   return (
     <>

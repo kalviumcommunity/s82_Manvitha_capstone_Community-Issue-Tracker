@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Bell, Sun, Moon } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useNotifications } from '../../contexts/NotificationContext';
-// import { useAuth } from '../../contexts/AuthContext'; // Unused
+import { useAuth } from '../../contexts/AuthContext';
 import NotificationDropdown from './NotificationDropdown';
 import Cookies from 'js-cookie';
 
 const Navbar = () => {
   const { theme, toggleTheme } = useTheme();
   const { unreadCount } = useNotifications();
-  // const { logout } = useAuth(); // Unused
+  const { user } = useAuth();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [userName, setUserName] = useState('');
 
@@ -18,8 +18,8 @@ const Navbar = () => {
     const userCookie = Cookies.get('user');
     if (userCookie) {
       try {
-        const user = JSON.parse(userCookie);
-        setUserName(user.name || user.mail || 'User');
+        const userObj = JSON.parse(userCookie);
+        setUserName(userObj.name || userObj.mail || 'User');
       } catch (e) {
         console.error('Error parsing user cookie:', e);
       }
@@ -44,30 +44,32 @@ const Navbar = () => {
 
 
         {/* Notifications */}
-        <div className="relative">
-          <button
-            onClick={() => setNotificationsOpen((prev) => !prev)}
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 relative"
-            aria-label="Notifications"
-          >
-            <Bell size={20} className="text-gray-600 dark:text-gray-300" />
-            {unreadCount > 0 && (
-              <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                {unreadCount}
-              </span>
-            )}
-          </button>
+        {user?.communityId && (
+          <div className="relative">
+            <button
+              onClick={() => setNotificationsOpen((prev) => !prev)}
+              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 relative"
+              aria-label="Notifications"
+            >
+              <Bell size={20} className="text-gray-600 dark:text-gray-300" />
+              {unreadCount > 0 && (
+                <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
 
-          {notificationsOpen && (
-            <>
-              <div
-                className="fixed inset-0 z-20"
-                onClick={() => setNotificationsOpen(false)}
-              />
-              <NotificationDropdown onClose={() => setNotificationsOpen(false)} />
-            </>
-          )}
-        </div>
+            {notificationsOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-20"
+                  onClick={() => setNotificationsOpen(false)}
+                />
+                <NotificationDropdown onClose={() => setNotificationsOpen(false)} />
+              </>
+            )}
+          </div>
+        )}
 
         {/* Theme toggle */}
         <button
