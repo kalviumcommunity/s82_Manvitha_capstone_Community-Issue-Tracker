@@ -16,8 +16,8 @@ const CommentThread = ({ ticketId }) => {
     const fetchData = async () => {
       try {
         const [userRes, commentsRes] = await Promise.all([
-          axios.get('http://localhost:3551/api/v1/auth/me', { withCredentials: true }),
-          axios.get(`http://localhost:3551/api/v1/issues/${ticketId}/comments`, { withCredentials: true })
+          axios.get('https://s82-manvitha-capstone-community-issue-ojxt.onrender.com/api/v1/auth/me', { withCredentials: true }),
+          axios.get(`https://s82-manvitha-capstone-community-issue-ojxt.onrender.com/api/v1/issues/${ticketId}/comments`, { withCredentials: true })
         ]);
         setUser(userRes.data);
         setComments(commentsRes.data || []);
@@ -38,7 +38,7 @@ const CommentThread = ({ ticketId }) => {
 
     try {
       const res = await axios.post(
-        `http://localhost:3551/api/v1/issues/${ticketId}/comment`,
+        `https://s82-manvitha-capstone-community-issue-ojxt.onrender.com/api/v1/issues/${ticketId}/comment`,
         { body: newComment },
         { withCredentials: true }
       );

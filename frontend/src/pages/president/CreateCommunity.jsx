@@ -61,7 +61,7 @@ const CreateCommunity = () => {
         setError('');
 
         try {
-            const res = await axios.post('http://localhost:3551/api/v1/communities',
+            const res = await axios.post('https://s82-manvitha-capstone-community-issue-ojxt.onrender.com/api/v1/communities',
                 {
                     name: formData.name,
                     city: formData.city,

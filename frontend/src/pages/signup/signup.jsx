@@ -101,7 +101,7 @@ const Signup = () => {
   React.useEffect(() => {
     const fetchCommunities = async () => {
       try {
-        const res = await import("axios").then(m => m.default.get("http://localhost:3551/api/v1/communities/public"));
+        const res = await import("axios").then(m => m.default.get("https://s82-manvitha-capstone-community-issue-ojxt.onrender.com/api/v1/communities/public"));
         setCommunities(res.data);
       } catch (err) {
         console.error("Failed to load communities", err);

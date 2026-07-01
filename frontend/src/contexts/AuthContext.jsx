@@ -18,7 +18,7 @@ export const AuthProvider = ({ children }) => {
     const fetchUser = async () => {
       try {
         // The cookie is sent automatically by the browser
-        const res = await axios.get('http://localhost:3551/api/v1/auth/me');
+        const res = await axios.get('https://s82-manvitha-capstone-community-issue-ojxt.onrender.com/api/v1/auth/me');
         setUser(res.data);
       } catch (error) {
         console.log('No user logged in', error.response?.data?.message);
@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       // The backend will send user data AND set the HttpOnly cookie
-      const res = await axios.post('http://localhost:3551/api/v1/auth/login', { email, password });
+      const res = await axios.post('https://s82-manvitha-capstone-community-issue-ojxt.onrender.com/api/v1/auth/login', { email, password });
 
       // The response data *is* the user object. There is no token.
       setUser(res.data.user); // Adjusted based on controller response structure { message, user }
@@ -51,7 +51,7 @@ export const AuthProvider = ({ children }) => {
   const signup = async (formData) => {
     try {
       // The backend will send user data AND set the HttpOnly cookie
-      const res = await axios.post('http://localhost:3551/api/v1/auth/signup', formData);
+      const res = await axios.post('https://s82-manvitha-capstone-community-issue-ojxt.onrender.com/api/v1/auth/signup', formData);
 
       // The response data *is* the user object.
       setUser(res.data.user); // Adjusted based on controller response
@@ -67,7 +67,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       // We MUST call the backend to clear the HttpOnly cookie
-      await axios.post('http://localhost:3551/api/v1/auth/logout');
+      await axios.post('https://s82-manvitha-capstone-community-issue-ojxt.onrender.com/api/v1/auth/logout');
       setUser(null);
     } catch (error) {
       console.error('Logout failed:', error);

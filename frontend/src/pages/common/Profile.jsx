@@ -5,7 +5,7 @@ import axios from 'axios';
 import { User, Home, Phone, Mail, MapPin, Building, ShieldCheck, Loader2 } from 'lucide-react';
 
 const api = axios.create({
-    baseURL: 'http://localhost:3551/api/v1',
+    baseURL: 'https://s82-manvitha-capstone-community-issue-ojxt.onrender.com/api/v1',
     withCredentials: true,
 });
 

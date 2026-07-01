@@ -6,7 +6,7 @@ import { useAuth } from './AuthContext';
 const NotificationContext = createContext(undefined);
 
 const api = axios.create({
-  baseURL: 'http://localhost:3551/api/v1',
+  baseURL: 'https://s82-manvitha-capstone-community-issue-ojxt.onrender.com/api/v1',
   withCredentials: true,
 });
 
@@ -45,7 +45,7 @@ export const NotificationProvider = ({ children }) => {
       return;
     }
 
-    const newSocket = io('http://localhost:3551', {
+    const newSocket = io('https://s82-manvitha-capstone-community-issue-ojxt.onrender.com', {
       withCredentials: true,
     });
 

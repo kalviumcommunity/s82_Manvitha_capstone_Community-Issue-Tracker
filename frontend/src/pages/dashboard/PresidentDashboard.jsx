@@ -7,7 +7,7 @@ import AnnouncementBanner from '../../components/announcements/AnnouncementBanne
 import { useAuth } from '../../contexts/AuthContext';
 
 const api = axios.create({
-  baseURL: 'http://localhost:3551/api/v1',
+  baseURL: 'https://s82-manvitha-capstone-community-issue-ojxt.onrender.com/api/v1',
   withCredentials: true,
 });
 
