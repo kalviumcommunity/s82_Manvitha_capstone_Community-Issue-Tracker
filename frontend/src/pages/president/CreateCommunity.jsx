@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { useAuth } from '../../contexts/AuthContext'; // Updated path to context
+import { Building, Loader2 } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 
 const CreateCommunity = () => {
     const [formData, setFormData] = useState({
@@ -15,7 +16,7 @@ const CreateCommunity = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const navigate = useNavigate();
-    const { user } = useAuth(); // Get user context to update state if needed
+    const { user } = useAuth();
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -61,7 +62,7 @@ const CreateCommunity = () => {
         setError('');
 
         try {
-            const res = await axios.post('https://s82-manvitha-capstone-community-issue-ojxt.onrender.com/api/v1/communities',
+            await axios.post('https://s82-manvitha-capstone-community-issue-ojxt.onrender.com/api/v1/communities',
                 {
                     name: formData.name,
                     city: formData.city,
@@ -72,14 +73,12 @@ const CreateCommunity = () => {
                 { withCredentials: true }
             );
 
-            // Directly redirect to dashboard
-            window.location.href = '/president/dashboard'; // Force reload to refresh user cookie/context if needed
+            window.location.href = '/president/dashboard';
 
         } catch (err) {
             console.error(err);
             const errMsg = err.response?.data?.message || 'Failed to create community.';
             
-            // Map validation messages to fields
             if (errMsg.toLowerCase().includes('name')) {
                 setFieldErrors({ name: 'Community name must be at least 3 characters long.' });
             } else if (errMsg.toLowerCase().includes('email')) {
@@ -93,17 +92,29 @@ const CreateCommunity = () => {
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 p-4">
-            <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-md w-full max-w-lg border dark:border-gray-700">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">
-                    Create Your Community
-                </h2>
+        <div className="flex items-center justify-center min-h-[calc(100vh-2rem)] p-4">
+            <div className="bg-[#121212]/95 border border-[#262626] p-8 rounded-3xl w-full max-w-lg backdrop-blur-xl">
+                <div className="text-center mb-6">
+                    <div className="w-14 h-14 rounded-2xl bg-[#B87333]/15 border border-[#B87333]/30 text-[#E5A96A] flex items-center justify-center mx-auto mb-3">
+                        <Building size={28} />
+                    </div>
+                    <h2 className="text-2xl font-bold text-[#F5F2ED] font-serif">
+                        Create Your Community
+                    </h2>
+                    <p className="text-xs sm:text-sm text-[#888888] mt-1">
+                        Set up your community workspace to begin onboarding users and managing tickets.
+                    </p>
+                </div>
 
-                {error && <div className="bg-red-100 text-red-700 p-3 rounded mb-4 text-sm">{error}</div>}
+                {error && (
+                    <div className="bg-rose-500/10 border border-rose-500/25 text-rose-300 p-3.5 rounded-xl mb-4 text-xs">
+                        {error}
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <label className="block text-xs font-semibold text-[#A0A0A0] uppercase mb-1">
                             Community Name
                         </label>
                         <input
@@ -112,18 +123,18 @@ const CreateCommunity = () => {
                             required
                             value={formData.name}
                             onChange={handleChange}
-                            className={`w-full px-4 py-2 border rounded-md dark:bg-gray-700 dark:text-white border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none ${
-                                fieldErrors.name ? 'border-red-500 dark:border-red-500 focus:ring-red-500' : ''
+                            className={`w-full px-4 py-2.5 border rounded-xl bg-[#171717] text-[#F5F2ED] text-xs sm:text-sm focus:border-[#B87333]/60 outline-none ${
+                                fieldErrors.name ? 'border-rose-500' : 'border-[#292929]'
                             }`}
                             placeholder="e.g., Sunrise Apartments"
                         />
                         {fieldErrors.name && (
-                            <p className="mt-1 text-xs text-red-500 font-medium">{fieldErrors.name}</p>
+                            <p className="mt-1 text-xs text-rose-400">{fieldErrors.name}</p>
                         )}
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <label className="block text-xs font-semibold text-[#A0A0A0] uppercase mb-1">
                             Address
                         </label>
                         <input
@@ -132,18 +143,18 @@ const CreateCommunity = () => {
                             required
                             value={formData.address}
                             onChange={handleChange}
-                            className={`w-full px-4 py-2 border rounded-md dark:bg-gray-700 dark:text-white border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none ${
-                                fieldErrors.address ? 'border-red-500 dark:border-red-500 focus:ring-red-500' : ''
+                            className={`w-full px-4 py-2.5 border rounded-xl bg-[#171717] text-[#F5F2ED] text-xs sm:text-sm focus:border-[#B87333]/60 outline-none ${
+                                fieldErrors.address ? 'border-rose-500' : 'border-[#292929]'
                             }`}
                             placeholder="e.g., 123 Main St"
                         />
                         {fieldErrors.address && (
-                            <p className="mt-1 text-xs text-red-500 font-medium">{fieldErrors.address}</p>
+                            <p className="mt-1 text-xs text-rose-400">{fieldErrors.address}</p>
                         )}
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <label className="block text-xs font-semibold text-[#A0A0A0] uppercase mb-1">
                             City
                         </label>
                         <input
@@ -152,19 +163,19 @@ const CreateCommunity = () => {
                             required
                             value={formData.city}
                             onChange={handleChange}
-                            className={`w-full px-4 py-2 border rounded-md dark:bg-gray-700 dark:text-white border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none ${
-                                fieldErrors.city ? 'border-red-500 dark:border-red-500 focus:ring-red-500' : ''
+                            className={`w-full px-4 py-2.5 border rounded-xl bg-[#171717] text-[#F5F2ED] text-xs sm:text-sm focus:border-[#B87333]/60 outline-none ${
+                                fieldErrors.city ? 'border-rose-500' : 'border-[#292929]'
                             }`}
                             placeholder="e.g., New Delhi"
                         />
                         {fieldErrors.city && (
-                            <p className="mt-1 text-xs text-red-500 font-medium">{fieldErrors.city}</p>
+                            <p className="mt-1 text-xs text-rose-400">{fieldErrors.city}</p>
                         )}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            <label className="block text-xs font-semibold text-[#A0A0A0] uppercase mb-1">
                                 Contact Phone
                             </label>
                             <input
@@ -173,17 +184,17 @@ const CreateCommunity = () => {
                                 required
                                 value={formData.contactPhone}
                                 onChange={handleChange}
-                                className={`w-full px-4 py-2 border rounded-md dark:bg-gray-700 dark:text-white border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none ${
-                                    fieldErrors.contactPhone ? 'border-red-500 dark:border-red-500 focus:ring-red-500' : ''
+                                className={`w-full px-4 py-2.5 border rounded-xl bg-[#171717] text-[#F5F2ED] text-xs sm:text-sm focus:border-[#B87333]/60 outline-none ${
+                                    fieldErrors.contactPhone ? 'border-rose-500' : 'border-[#292929]'
                                 }`}
                                 placeholder="Phone number"
                             />
                             {fieldErrors.contactPhone && (
-                                <p className="mt-1 text-xs text-red-500 font-medium">{fieldErrors.contactPhone}</p>
+                                <p className="mt-1 text-xs text-rose-400">{fieldErrors.contactPhone}</p>
                             )}
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            <label className="block text-xs font-semibold text-[#A0A0A0] uppercase mb-1">
                                 Contact Email
                             </label>
                             <input
@@ -192,29 +203,31 @@ const CreateCommunity = () => {
                                 required
                                 value={formData.contactEmail}
                                 onChange={handleChange}
-                                className={`w-full px-4 py-2 border rounded-md dark:bg-gray-700 dark:text-white border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none ${
-                                    fieldErrors.contactEmail ? 'border-red-500 dark:border-red-500 focus:ring-red-500' : ''
+                                className={`w-full px-4 py-2.5 border rounded-xl bg-[#171717] text-[#F5F2ED] text-xs sm:text-sm focus:border-[#B87333]/60 outline-none ${
+                                    fieldErrors.contactEmail ? 'border-rose-500' : 'border-[#292929]'
                                 }`}
                                 placeholder="Email address"
                             />
                             {fieldErrors.contactEmail && (
-                                <p className="mt-1 text-xs text-red-500 font-medium">{fieldErrors.contactEmail}</p>
+                                <p className="mt-1 text-xs text-rose-400">{fieldErrors.contactEmail}</p>
                             )}
                         </div>
                     </div>
 
+                    {/* Glassy Submit Button - Zero drop shadows */}
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-md transition disabled:opacity-50"
+                        className="w-full bg-gradient-to-r from-[#B87333]/25 via-[#B87333]/20 to-[#B87333]/15 hover:from-[#B87333]/35 hover:to-[#B87333]/25 dark:bg-none dark:bg-[#141414] hover:dark:bg-[#1E1E1E] border border-[#B87333]/50 hover:border-[#B87333] text-[#F5F2ED] font-semibold py-3 rounded-xl transition-all duration-200 cursor-pointer backdrop-blur-md text-sm mt-2 flex items-center justify-center gap-2 disabled:opacity-50"
                     >
-                        {loading ? 'Creating...' : 'Create Community'}
+                        {loading ? <Loader2 className="animate-spin" size={18} /> : null}
+                        {loading ? 'Creating Community...' : 'Create Community'}
                     </button>
                 </form>
 
                 <button
                     onClick={() => navigate('/president/dashboard')}
-                    className="w-full mt-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-sm"
+                    className="w-full mt-3 text-[#737373] hover:text-[#F5F2ED] text-xs transition-colors py-2 cursor-pointer"
                 >
                     Cancel
                 </button>

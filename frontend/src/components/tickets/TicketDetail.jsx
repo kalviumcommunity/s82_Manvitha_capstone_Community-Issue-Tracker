@@ -8,17 +8,17 @@ import { formatDistanceToNow, format } from 'date-fns';
 import CommentThread from './CommentThread';
 
 const statusConfig = {
-    OPEN: { color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300', label: 'Open' },
-    IN_PROGRESS: { color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300', label: 'In Progress' },
-    RESOLVED: { color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300', label: 'Resolved' },
-    CLOSED: { color: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300', label: 'Closed' },
+    OPEN: { color: 'bg-amber-500/15 text-amber-600 dark:text-amber-300 border border-amber-500/30', label: 'Open' },
+    IN_PROGRESS: { color: 'bg-[#B87333]/15 text-[#8B4513] dark:text-[#E5A96A] border border-[#B87333]/30', label: 'In Progress' },
+    RESOLVED: { color: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30', label: 'Resolved' },
+    CLOSED: { color: 'bg-gray-100 dark:bg-[#1E1E1E] text-gray-600 dark:text-[#888888] border border-gray-200 dark:border-[#2E2E2E]', label: 'Closed' },
 };
 
 const priorityConfig = {
-    LOW: { color: 'text-gray-500', label: 'Low' },
-    MEDIUM: { color: 'text-blue-500', label: 'Medium' },
-    HIGH: { color: 'text-orange-500', label: 'High' },
-    CRITICAL: { color: 'text-red-500', label: 'Critical' },
+    LOW: { color: 'text-[#777777] dark:text-[#737373]', label: 'Low' },
+    MEDIUM: { color: 'text-sky-500 dark:text-sky-400', label: 'Medium' },
+    HIGH: { color: 'text-amber-500 dark:text-amber-400', label: 'High' },
+    CRITICAL: { color: 'text-rose-500 dark:text-rose-400', label: 'Critical' },
 };
 
 const api = axios.create({
@@ -59,9 +59,9 @@ const TicketDetail = () => {
         try {
             const res = await api.post(`/issues/${ticketId}/status`, {
                 status: newStatus,
-                note: `Status updated to ${newStatus} by ${user.name}`
+                note: `Status updated to ${newStatus} by ${user?.name || 'Admin'}`
             });
-            setTicket(res.data); // Update local state with new ticket data
+            setTicket(res.data);
         } catch (err) {
             console.error("Error updating status:", err);
             addNotification({ title: 'Error', message: 'Failed to update status', type: 'error' });
@@ -72,19 +72,19 @@ const TicketDetail = () => {
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+            <div className="flex justify-center items-center h-96">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#B87333]"></div>
             </div>
         );
     }
 
     if (error || !ticket) {
         return (
-            <div className="p-6 text-center">
-                <h2 className="text-xl text-red-500 mb-4">{error || "Ticket not found"}</h2>
+            <div className="p-8 text-center max-w-md mx-auto mt-10 bg-white/90 dark:bg-[#121212] border border-[#E5E0D8] dark:border-[#262626] rounded-2xl">
+                <h2 className="text-lg text-rose-500 mb-4">{error || "Ticket not found"}</h2>
                 <button
                     onClick={() => navigate(-1)}
-                    className="text-blue-600 hover:underline flex items-center justify-center gap-2 mx-auto"
+                    className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white/70 dark:bg-[#141414]/80 border border-[#B87333]/60 hover:border-[#B87333] text-[#B87333] hover:text-[#C98545] text-sm cursor-pointer"
                 >
                     <ArrowLeft size={16} /> Go Back
                 </button>
@@ -97,64 +97,66 @@ const TicketDetail = () => {
     const isPresident = user?.role === 'PRESIDENT';
 
     return (
-        <div className="max-w-4xl mx-auto p-4 lg:p-8">
-            {/* Header / Nav */}
-            <button
-                onClick={() => navigate(-1)}
-                className="mb-6 flex items-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
-            >
-                <ArrowLeft size={20} className="mr-2" />
-                Back to Dashboard
-            </button>
+        <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+            {/* Back Navigation Button with Copper Border */}
+            <div>
+                <button
+                    onClick={() => navigate(-1)}
+                    className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white/70 dark:bg-[#141414]/80 hover:bg-[#F2EDE3] dark:hover:bg-[#1A1A1A] border border-[#B87333]/60 hover:border-[#B87333] text-xs font-semibold text-[#1A1A1A] dark:text-[#F5F2ED] transition-all cursor-pointer backdrop-blur-md"
+                >
+                    <ArrowLeft size={14} className="text-[#B87333]" />
+                    <span>Back</span>
+                </button>
+            </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="bg-white/95 dark:bg-[#121212]/95 rounded-3xl border border-[#E5E0D8] dark:border-[#222222] overflow-hidden backdrop-blur-xl">
                 {/* Ticket Header */}
-                <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+                <div className="p-5 sm:p-6 border-b border-[#E5E0D8] dark:border-[#222222]">
                     <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                         <div>
-                            <div className="flex items-center gap-3 mb-2">
-                                <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide ${status.color}`}>
+                            <div className="flex items-center gap-2.5 mb-2.5 flex-wrap">
+                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${status.color}`}>
                                     {status.label}
                                 </span>
                                 {ticket.priority && ticket.priority.toUpperCase() !== 'LOW' && (
-                                    <span className={`flex items-center text-sm font-medium ${priority.color}`}>
-                                        <AlertTriangle size={14} className="mr-1" />
+                                    <span className={`flex items-center text-xs font-medium ${priority.color}`}>
+                                        <AlertTriangle size={13} className="mr-1" />
                                         {priority.label} Priority
                                     </span>
                                 )}
-                                <span className="text-sm text-gray-500 dark:text-gray-400">
+                                <span className="text-xs text-[#888888] dark:text-[#737373]">
                                     #{ticket._id.slice(-6).toUpperCase()}
                                 </span>
                             </div>
-                            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                            <h1 className="text-xl sm:text-2xl font-bold text-[#1A1A1A] dark:text-[#F5F2ED] mb-2 font-serif">
                                 {ticket.title}
                             </h1>
-                            <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 gap-4">
+                            <div className="flex items-center text-xs text-[#666666] dark:text-[#737373] gap-4 flex-wrap">
                                 <span className="flex items-center">
-                                    <User size={14} className="mr-1" />
-                                    Created by Residents
+                                    <User size={13} className="mr-1 text-[#B87333]" />
+                                    Created by {ticket.createdBy?.name || 'Community Member'}
                                 </span>
                                 <span className="flex items-center">
-                                    <Clock size={14} className="mr-1" />
-                                    {format(new Date(ticket.createdAt), 'PPP p')}
+                                    <Clock size={13} className="mr-1" />
+                                    {ticket.createdAt ? format(new Date(ticket.createdAt), 'PPP p') : 'Recent'}
                                 </span>
                             </div>
                         </div>
 
                         {/* Admin Actions */}
                         {isPresident && (
-                            <div className="flex flex-col gap-2 min-w-[200px]">
-                                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            <div className="flex flex-col gap-1.5 min-w-[200px]">
+                                <label className="text-[11px] font-semibold text-[#777777] dark:text-[#737373] uppercase tracking-wider">
                                     Update Status
                                 </label>
                                 <select
                                     value={ticket.status}
                                     onChange={(e) => handleStatusChange(e.target.value)}
                                     disabled={updating}
-                                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full px-3 py-2 bg-[#FAF7F2] dark:bg-[#171717] border border-[#D5CEC2] dark:border-[#292929] rounded-xl text-xs sm:text-sm text-[#1A1A1A] dark:text-[#F5F2ED] focus:border-[#B87333] outline-none cursor-pointer"
                                 >
                                     {Object.keys(statusConfig).map(s => (
-                                        <option key={s} value={s}>{statusConfig[s].label}</option>
+                                        <option key={s} value={s} className="bg-white dark:bg-[#171717] text-[#1A1A1A] dark:text-[#F5F2ED]">{statusConfig[s].label}</option>
                                     ))}
                                 </select>
                             </div>
@@ -163,13 +165,12 @@ const TicketDetail = () => {
                 </div>
 
                 {/* Ticket Body */}
-                <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="p-5 sm:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2 space-y-6">
-
                         {/* Description */}
                         <div>
-                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Description</h3>
-                            <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+                            <h3 className="text-xs font-semibold text-[#777777] dark:text-[#737373] uppercase tracking-wider mb-2">Description</h3>
+                            <p className="text-xs sm:text-sm text-[#333333] dark:text-[#D4D4D4] leading-relaxed whitespace-pre-wrap">
                                 {ticket.description}
                             </p>
                         </div>
@@ -177,10 +178,10 @@ const TicketDetail = () => {
                         {/* Photos */}
                         {ticket.photos && ticket.photos.length > 0 && (
                             <div>
-                                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Attached Photos</h3>
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                <h3 className="text-xs font-semibold text-[#777777] dark:text-[#737373] uppercase tracking-wider mb-3">Attached Photos</h3>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                     {ticket.photos.map((photo, index) => (
-                                        <div key={index} className="aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-900">
+                                        <div key={index} className="aspect-square rounded-xl overflow-hidden border border-[#E5E0D8] dark:border-[#262626] bg-[#F2EDE3] dark:bg-[#141414]">
                                             <img
                                                 src={photo}
                                                 alt={`Attachment ${index + 1}`}
@@ -194,51 +195,51 @@ const TicketDetail = () => {
                         )}
 
                         {/* Comments Section */}
-                        <div className="pt-6 border-t border-gray-100 dark:border-gray-700">
-                            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-                                <MessageSquare size={20} className="mr-2" />
-                                Comments & Updates
+                        <div className="pt-5 border-t border-[#E5E0D8] dark:border-[#222222]">
+                            <h3 className="text-base font-semibold text-[#1A1A1A] dark:text-[#F5F2ED] mb-3.5 flex items-center">
+                                <MessageSquare size={18} className="mr-2 text-[#B87333]" />
+                                Comments & Discussion
                             </h3>
                             <CommentThread ticketId={ticket._id} />
                         </div>
                     </div>
 
                     {/* Sidebar Info */}
-                    <div className="lg:col-span-1 space-y-6">
-                        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-100 dark:border-gray-700">
-                            <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Details</h4>
-                            <dl className="space-y-3 text-sm">
+                    <div className="lg:col-span-1 space-y-4">
+                        <div className="bg-[#FAF7F2] dark:bg-[#171717]/60 rounded-2xl p-4 border border-[#E5E0D8] dark:border-[#222222]">
+                            <h4 className="text-xs font-semibold text-[#777777] dark:text-[#737373] uppercase tracking-wider mb-3">Ticket Details</h4>
+                            <dl className="space-y-2.5 text-xs">
                                 <div className="flex justify-between">
-                                    <dt className="text-gray-500 dark:text-gray-400">Category</dt>
-                                    <dd className="font-medium text-gray-900 dark:text-white capitalize">{ticket.category}</dd>
+                                    <dt className="text-[#777777] dark:text-[#737373]">Category</dt>
+                                    <dd className="font-medium text-[#1A1A1A] dark:text-[#F5F2ED] capitalize">{ticket.category}</dd>
                                 </div>
                                 {ticket.unit && (
                                     <div className="flex justify-between">
-                                        <dt className="text-gray-500 dark:text-gray-400">Unit / Location</dt>
-                                        <dd className="font-medium text-gray-900 dark:text-white">{ticket.unit}</dd>
+                                        <dt className="text-[#777777] dark:text-[#737373]">Unit / Location</dt>
+                                        <dd className="font-medium text-[#1A1A1A] dark:text-[#F5F2ED]">{ticket.unit}</dd>
                                     </div>
                                 )}
                                 <div className="flex justify-between">
-                                    <dt className="text-gray-500 dark:text-gray-400">Last Updated</dt>
-                                    <dd className="font-medium text-gray-900 dark:text-white">
-                                        {formatDistanceToNow(new Date(ticket.updatedAt), { addSuffix: true })}
+                                    <dt className="text-[#777777] dark:text-[#737373]">Last Updated</dt>
+                                    <dd className="font-medium text-[#1A1A1A] dark:text-[#F5F2ED]">
+                                        {ticket.updatedAt && formatDistanceToNow(new Date(ticket.updatedAt), { addSuffix: true })}
                                     </dd>
                                 </div>
                             </dl>
                         </div>
 
                         {ticket.history && ticket.history.length > 0 && (
-                            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-100 dark:border-gray-700">
-                                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">History</h4>
-                                <div className="space-y-3 relative before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-gray-200 dark:before:bg-gray-600">
+                            <div className="bg-[#FAF7F2] dark:bg-[#171717]/60 rounded-2xl p-4 border border-[#E5E0D8] dark:border-[#222222]">
+                                <h4 className="text-xs font-semibold text-[#777777] dark:text-[#737373] uppercase tracking-wider mb-3">History</h4>
+                                <div className="space-y-3 relative before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-[#E5E0D8] dark:before:bg-[#262626]">
                                     {ticket.history.slice().reverse().slice(0, 5).map((h, i) => (
                                         <div key={i} className="relative pl-6 text-xs">
-                                            <div className="absolute left-1 top-1 w-2.5 h-2.5 rounded-full bg-blue-400 border-2 border-white dark:border-gray-800"></div>
-                                            <p className="font-medium text-gray-900 dark:text-white">
+                                            <div className="absolute left-1 top-1 w-2.5 h-2.5 rounded-full bg-[#B87333] border-2 border-white dark:border-[#121212]"></div>
+                                            <p className="font-medium text-[#1A1A1A] dark:text-[#F5F2ED]">
                                                 {h.action ? h.action.replace('_', ' ') : 'Update'}
                                             </p>
-                                            <p className="text-gray-500 dark:text-gray-400">
-                                                {format(new Date(h.at), 'MMM d, h:mm a')}
+                                            <p className="text-[11px] text-[#777777] dark:text-[#737373]">
+                                                {h.at && format(new Date(h.at), 'MMM d, h:mm a')}
                                             </p>
                                         </div>
                                     ))}

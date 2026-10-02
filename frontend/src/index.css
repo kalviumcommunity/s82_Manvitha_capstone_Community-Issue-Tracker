@@ -1,1 +1,108 @@
 @import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-brand-bg: #080808;
+  --color-brand-card: #121212;
+  --color-brand-elevated: #1A1A1A;
+  --color-brand-border: #292929;
+
+  --color-copper-primary: #B87333;
+  --color-copper-hover: #C98545;
+  --color-copper-soft: #8F5A2B;
+
+  --color-text-primary: #F5F2ED;
+  --color-text-secondary: #A8A29E;
+  --color-text-disabled: #66615D;
+
+  --color-status-resolved: #4ADE80;
+  --color-status-progress: #FBBF24;
+  --color-status-urgent: #EF4444;
+  --color-status-info: #60A5FA;
+}
+
+:root {
+  color-scheme: light;
+}
+
+:root.dark, html.dark {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background-color: #F7F5F0;
+  color: #1A1A1A;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+html.dark body {
+  background-color: #080808;
+  color: #F5F2ED;
+}
+
+/* Subtle civic scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 3px;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: #292929;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #B87333;
+}
+
+::selection {
+  background: #B87333;
+  color: #080808;
+}
+
+@keyframes authFadeScale {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes dashboardPulse {
+  0% {
+    transform: scale(0.96);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.02);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-auth-in {
+  animation: authFadeScale 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-dashboard-transition {
+  animation: dashboardPulse 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

@@ -28,7 +28,6 @@ const AllTickets = () => {
     fetchTickets();
   }, []);
 
-  // Filter + Search logic
   const filteredTickets = tickets.filter((ticket) => {
     const matchesStatus =
       filterStatus === "all" || ticket.status?.toLowerCase() === filterStatus.toLowerCase();
@@ -44,18 +43,18 @@ const AllTickets = () => {
   if (loading) {
     return (
       <div className="flex h-96 items-center justify-center">
-        <Loader2 className="animate-spin text-blue-500" size={40} />
+        <Loader2 className="animate-spin text-[#B87333]" size={36} />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-8 text-center text-red-500">
-        <p>{error}</p>
+      <div className="p-8 text-center max-w-md mx-auto mt-10 bg-[#121212] border border-[#262626] rounded-2xl">
+        <p className="text-rose-400 text-sm mb-4">{error}</p>
         <button
           onClick={() => window.location.reload()}
-          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          className="px-5 py-2 text-xs font-semibold bg-[#B87333]/20 hover:bg-[#B87333]/30 border border-[#B87333]/45 text-[#F5F2ED] rounded-xl transition-all cursor-pointer backdrop-blur-md"
         >
           Retry
         </button>
@@ -64,48 +63,50 @@ const AllTickets = () => {
   }
 
   return (
-    <div className="p-4 lg:p-6">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-3">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          All Tickets
-        </h1>
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#222222] pb-5">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#F5F2ED] font-serif tracking-tight">
+            All Community Tickets
+          </h1>
+          <p className="text-xs sm:text-sm text-[#888888] mt-1">
+            Monitor and update all issues reported across the community.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2.5 flex-wrap">
           {/* Search bar */}
           <div className="relative">
-            <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+            <Search className="absolute left-3 top-2.5 text-[#737373]" size={16} />
             <input
               type="text"
-              placeholder="Search by title, desc or unit..."
+              placeholder="Search tickets..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 pr-4 py-2 border border-gray-300 dark:border-gray-700 
-                         rounded-lg bg-white dark:bg-gray-800 text-gray-900 
-                         dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
+              className="pl-9 pr-4 py-2 border border-[#262626] rounded-xl bg-[#141414] text-xs sm:text-sm text-[#F5F2ED] focus:border-[#B87333]/60 outline-none"
             />
           </div>
 
           {/* Filter dropdown */}
           <div className="relative">
-            <Filter className="absolute left-3 top-2.5 text-gray-400" size={18} />
+            <Filter className="absolute left-3 top-2.5 text-[#737373]" size={16} />
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="pl-9 pr-8 py-2 border border-gray-300 dark:border-gray-700 
-                         rounded-lg bg-white dark:bg-gray-800 text-gray-900 
-                         dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
+              className="pl-9 pr-8 py-2 border border-[#262626] rounded-xl bg-[#141414] text-xs sm:text-sm text-[#F5F2ED] focus:border-[#B87333]/60 outline-none cursor-pointer"
             >
-              <option value="all">All</option>
-              <option value="open">Open</option>
-              <option value="in_progress">In Progress</option>
-              <option value="resolved">Resolved</option>
-              <option value="closed">Closed</option>
+              <option value="all" className="bg-[#141414]">All Status</option>
+              <option value="open" className="bg-[#141414]">Open</option>
+              <option value="in_progress" className="bg-[#141414]">In Progress</option>
+              <option value="resolved" className="bg-[#141414]">Resolved</option>
+              <option value="closed" className="bg-[#141414]">Closed</option>
             </select>
           </div>
         </div>
       </div>
 
-      {/* Tickets Grid/List */}
+      {/* Tickets Grid */}
       {filteredTickets.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredTickets.map((ticket) => (
@@ -113,8 +114,8 @@ const AllTickets = () => {
           ))}
         </div>
       ) : (
-        <div className="text-center text-gray-500 dark:text-gray-400 mt-10">
-          No tickets found.
+        <div className="bg-[#121212]/70 rounded-2xl p-12 text-center border border-dashed border-[#262626]">
+          <p className="text-xs sm:text-sm text-[#737373]">No tickets found matching your criteria.</p>
         </div>
       )}
     </div>

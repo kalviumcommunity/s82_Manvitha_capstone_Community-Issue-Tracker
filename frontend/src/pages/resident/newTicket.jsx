@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Send, ArrowLeft, Loader2, Sparkles } from 'lucide-react';
-// import { useAuth } from '../../contexts/AuthContext'; // Unused
 import { useNotifications } from '../../contexts/NotificationContext';
 import axios from 'axios';
 
-// API Instance aligned with your backend
 const api = axios.create({
   baseURL: 'https://s82-manvitha-capstone-community-issue-ojxt.onrender.com/api/v1',
   withCredentials: true,
@@ -15,13 +13,12 @@ const NewTicket = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const ticketToEdit = location.state?.ticketToEdit;
-  // const { user } = useAuth(); // Unused
   const { addNotification } = useNotifications();
 
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    category: 'other', // default category
+    category: 'other',
   });
 
   const [formErrors, setFormErrors] = useState({});
@@ -88,7 +85,7 @@ const NewTicket = () => {
 
     try {
       setLoadingSuggestion(true);
-      setAiSuggestions([]); // Clear previous
+      setAiSuggestions([]);
       const res = await api.post('/autocomplete', {
         title: formData.title,
         description: formData.description,
@@ -108,7 +105,7 @@ const NewTicket = () => {
 
   const handleSelectSuggestion = (suggestion) => {
     setFormData((prev) => ({ ...prev, description: suggestion }));
-    setAiSuggestions([]); // Close suggestion list
+    setAiSuggestions([]);
   };
 
   const handleSubmit = async (e) => {
@@ -118,7 +115,6 @@ const NewTicket = () => {
 
     try {
       if (ticketToEdit?._id) {
-        // Update
         await api.put(`/issues/${ticketToEdit._id}`, formData);
         addNotification({
           title: 'Ticket Updated',
@@ -126,7 +122,6 @@ const NewTicket = () => {
           type: 'ticket',
         });
       } else {
-        // Create
         await api.post('/issues', formData);
         addNotification({
           title: 'Ticket Created',
@@ -139,7 +134,6 @@ const NewTicket = () => {
     } catch (error) {
       const msg = error.response?.data?.message || 'Failed to submit ticket';
       
-      // Parse Mongoose / Backend validation errors if present
       if (msg.includes('validation failed') || msg.includes('Validation failed')) {
         const backendErrors = {};
         
@@ -183,134 +177,135 @@ const NewTicket = () => {
   };
 
   return (
-    <div className="p-4 lg:p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
-      <div className="mb-6">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-3xl mx-auto space-y-6">
+      <div>
+        {/* Back Button with prominent glassy copper border */}
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"
+          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white/70 dark:bg-[#141414]/80 hover:bg-[#F2EDE3] dark:hover:bg-[#1A1A1A] border border-[#B87333]/60 hover:border-[#B87333] text-xs font-semibold text-[#1A1A1A] dark:text-[#F5F2ED] transition-all cursor-pointer backdrop-blur-md mb-4"
         >
-          <ArrowLeft size={18} className="mr-2" />
+          <ArrowLeft size={14} className="text-[#B87333]" />
           <span>Back</span>
         </button>
+        <h1 className="text-2xl sm:text-3xl font-bold text-[#1A1A1A] dark:text-[#F5F2ED] font-serif tracking-tight">
+          {ticketToEdit ? 'Edit Ticket' : 'Report an Issue'}
+        </h1>
+        <p className="text-xs sm:text-sm text-[#666666] dark:text-[#888888] mt-1">
+          Provide details so the community administration can resolve the issue promptly.
+        </p>
       </div>
 
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-          {ticketToEdit ? 'Edit Issue Report' : 'Report a New Community Issue'}
-        </h1>
+      <div className="bg-white/95 dark:bg-[#121212]/95 rounded-3xl border border-[#E5E0D8] dark:border-[#222222] overflow-hidden backdrop-blur-xl">
+        <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6">
+          {/* Title */}
+          <div>
+            <label className="block text-xs font-semibold text-[#777777] dark:text-[#A0A0A0] uppercase tracking-wider mb-2">
+              Issue Title
+            </label>
+            <input
+              type="text"
+              name="title"
+              value={formData.title}
+              onChange={handleChange}
+              placeholder="e.g., Street light broken in Block C"
+              className={`w-full px-4 py-3 rounded-xl border bg-[#FAF7F2] dark:bg-[#171717] text-[#1A1A1A] dark:text-[#F5F2ED] text-xs sm:text-sm focus:border-[#B87333] outline-none transition-all ${
+                formErrors.title ? 'border-rose-500' : 'border-[#D5CEC2] dark:border-[#292929]'
+              }`}
+            />
+            {formErrors.title && <p className="mt-1.5 text-xs text-rose-500">{formErrors.title}</p>}
+          </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <form onSubmit={handleSubmit} className="p-6 space-y-6">
-            {/* Title */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                Short Title
-              </label>
-              <input
-                type="text"
-                name="title"
-                value={formData.title}
-                onChange={handleChange}
-                placeholder="e.g., Street light broken in Block C"
-                className={`w-full px-4 py-2 rounded-lg border bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 outline-none transition-all ${formErrors.title ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 dark:border-gray-600 focus:ring-blue-100'
-                  }`}
-              />
-              {formErrors.title && <p className="mt-1 text-xs text-red-500">{formErrors.title}</p>}
-            </div>
-
-            {/* Category */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                Category
-              </label>
-              <select
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-100 outline-none"
-              >
-                {categories.map((cat) => (
-                  <option key={cat} value={cat} className="capitalize">{cat}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Description */}
-            <div>
-              <div className="flex justify-between items-end mb-1">
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Full Details
-                </label>
-                <button
-                  type="button"
-                  onClick={handleAutoFill}
-                  disabled={loadingSuggestion}
-                  className="flex items-center text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 transition-opacity disabled:opacity-50"
-                >
-                  <Sparkles size={14} className="mr-1" />
-                  {loadingSuggestion ? 'Refining...' : 'AI Rephrase'}
-                </button>
-              </div>
-
-              {/* AI Suggestions List */}
-              {aiSuggestions.length > 0 && (
-                <div className="mb-4 space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                  <p className="text-[10px] uppercase tracking-wider font-bold text-blue-500 dark:text-blue-400 mb-2">
-                    Pick a version to use:
-                  </p>
-                  <div className="grid gap-2">
-                    {aiSuggestions.map((s, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => handleSelectSuggestion(s)}
-                        className="text-left p-3 text-sm rounded-lg border border-blue-100 dark:border-blue-900 bg-blue-50/50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 hover:border-blue-300 transition-all group relative overflow-hidden"
-                      >
-                        <div className="absolute top-0 right-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Send size={12} className="text-blue-500" />
-                        </div>
-                        <span className="text-gray-800 dark:text-gray-200 line-clamp-3 italic">
-                          "{s}"
-                        </span>
-                      </button>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={() => setAiSuggestions([])}
-                      className="text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-center w-full mt-1"
-                    >
-                      Cancel suggestions
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                rows={5}
-                placeholder="Describe the issue in detail or type a rough draft to rephrase with AI..."
-                className={`w-full px-4 py-2 rounded-lg border bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 outline-none transition-all ${formErrors.description ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 dark:border-gray-600 focus:ring-blue-100'
-                  }`}
-              />
-              {formErrors.description && <p className="mt-1 text-xs text-red-500">{formErrors.description}</p>}
-            </div>
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg flex items-center justify-center transition-colors disabled:bg-blue-400"
+          {/* Category */}
+          <div>
+            <label className="block text-xs font-semibold text-[#777777] dark:text-[#A0A0A0] uppercase tracking-wider mb-2">
+              Category
+            </label>
+            <select
+              name="category"
+              value={formData.category}
+              onChange={handleChange}
+              className="w-full px-4 py-3 rounded-xl border border-[#D5CEC2] dark:border-[#292929] bg-[#FAF7F2] dark:bg-[#171717] text-[#1A1A1A] dark:text-[#F5F2ED] text-xs sm:text-sm focus:border-[#B87333] outline-none cursor-pointer capitalize"
             >
-              {isSubmitting ? (
-                <Loader2 className="animate-spin mr-2" size={20} />
-              ) : (
-                <Send size={20} className="mr-2" />
-              )}
-              {ticketToEdit ? 'Update Report' : 'Submit Issue'}
-            </button>
-          </form>
-        </div>
+              {categories.map((cat) => (
+                <option key={cat} value={cat} className="bg-white dark:bg-[#171717] text-[#1A1A1A] dark:text-[#F5F2ED] capitalize">{cat}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Description */}
+          <div>
+            <div className="flex justify-between items-end mb-2">
+              <label className="block text-xs font-semibold text-[#777777] dark:text-[#A0A0A0] uppercase tracking-wider">
+                Description & Details
+              </label>
+              <button
+                type="button"
+                onClick={handleAutoFill}
+                disabled={loadingSuggestion}
+                className="flex items-center text-xs font-semibold text-[#B87333] hover:text-[#C98545] transition-colors disabled:opacity-40 cursor-pointer"
+              >
+                <Sparkles size={14} className="mr-1 text-[#B87333]" />
+                {loadingSuggestion ? 'Refining...' : 'AI Rephrase'}
+              </button>
+            </div>
+
+            {/* AI Suggestions */}
+            {aiSuggestions.length > 0 && (
+              <div className="mb-4 space-y-2 bg-[#FAF7F2] dark:bg-[#171717]/80 p-4 rounded-2xl border border-[#B87333]/30">
+                <p className="text-[10px] uppercase tracking-wider font-bold text-[#B87333] mb-2">
+                  Pick a version to use:
+                </p>
+                <div className="grid gap-2">
+                  {aiSuggestions.map((s, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => handleSelectSuggestion(s)}
+                      className="text-left p-3 text-xs rounded-xl border border-[#E5E0D8] dark:border-[#262626] bg-white dark:bg-[#141414] hover:border-[#B87333] transition-all cursor-pointer"
+                    >
+                      <span className="text-[#333333] dark:text-[#D4D4D4] line-clamp-3 italic">
+                        "{s}"
+                      </span>
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setAiSuggestions([])}
+                    className="text-[10px] text-[#888888] dark:text-[#737373] hover:text-[#1A1A1A] dark:hover:text-[#A0A0A0] text-center w-full mt-1 cursor-pointer"
+                  >
+                    Cancel suggestions
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              rows={5}
+              placeholder="Describe the issue in detail..."
+              className={`w-full px-4 py-3 rounded-xl border bg-[#FAF7F2] dark:bg-[#171717] text-[#1A1A1A] dark:text-[#F5F2ED] text-xs sm:text-sm focus:border-[#B87333] outline-none transition-all resize-none ${
+                formErrors.description ? 'border-rose-500' : 'border-[#D5CEC2] dark:border-[#292929]'
+              }`}
+            />
+            {formErrors.description && <p className="mt-1.5 text-xs text-rose-500">{formErrors.description}</p>}
+          </div>
+
+          {/* Submit Button with Crisp Copper Border */}
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full bg-gradient-to-r from-[#B87333]/25 via-[#B87333]/20 to-[#B87333]/15 hover:from-[#B87333]/35 hover:to-[#B87333]/25 dark:bg-none dark:bg-[#141414] hover:dark:bg-[#1E1E1E] border border-[#B87333]/60 hover:border-[#B87333] text-[#1A1A1A] dark:text-[#F5F2ED] font-semibold py-3.5 rounded-xl flex items-center justify-center transition-all duration-200 cursor-pointer backdrop-blur-md text-sm disabled:opacity-40"
+          >
+            {isSubmitting ? (
+              <Loader2 className="animate-spin mr-2" size={18} />
+            ) : (
+              <Send size={18} className="mr-2 text-[#B87333]" />
+            )}
+            {ticketToEdit ? 'Update Ticket' : 'Submit Ticket'}
+          </button>
+        </form>
       </div>
     </div>
   );
