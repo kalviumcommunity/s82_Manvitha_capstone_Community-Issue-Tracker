@@ -22,8 +22,7 @@ const CommentThread = ({ ticketId }) => {
         setUser(userRes.data);
         setComments(commentsRes.data || []);
       } catch (error) {
-        console.error('Error fetching data:', error);
-        // Still allow viewing if user fetch fails (though unlikely with auth guard)
+        console.error('Error fetching comments:', error);
       } finally {
         setLoading(false);
       }
@@ -45,7 +44,6 @@ const CommentThread = ({ ticketId }) => {
 
       const createdComment = res.data;
 
-      // Manually construct display object since the post response might not be populated
       const displayComment = {
         _id: createdComment._id,
         body: createdComment.body,
@@ -66,50 +64,50 @@ const CommentThread = ({ ticketId }) => {
     }
   };
 
-  if (loading) return <div className="p-4 text-center text-gray-500">Loading comments...</div>;
+  if (loading) return <div className="p-4 text-center text-xs text-[#737373]">Loading comments...</div>;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+    <div className="bg-[#121212]/90 rounded-2xl border border-[#222222] overflow-hidden backdrop-blur-md">
       {/* Comments list */}
       {comments.length > 0 ? (
-        <div className="p-4 space-y-4">
+        <div className="p-4 sm:p-5 space-y-4">
           {comments.map((comment) => {
             const author = comment.authorId || {};
             const userName = author.name || 'Unknown User';
             const userRole = author.role || 'RESIDENT';
+            const roleLabel = userRole === 'PRESIDENT' ? 'Admin' : 'User';
 
             return (
               <div key={comment._id || comment.id} className="flex gap-3">
                 <img
                   src={
                     author.avatar ||
-                    `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}`
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=222222&color=F5F2ED`
                   }
                   alt={userName}
-                  className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                  className="w-8 h-8 rounded-full object-cover shrink-0 border border-[#2E2E2E]"
                 />
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-center mb-1">
-                    <div>
-                      <span className="font-medium text-gray-900 dark:text-white">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-xs sm:text-sm text-[#F5F2ED]">
                         {userName}
                       </span>
-                      {userRole && (
-                        <span
-                          className={`ml-2 text-xs px-2 py-0.5 rounded-full ${userRole === 'PRESIDENT'
-                            ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
-                            : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                            }`}
-                        >
-                          {userRole === 'PRESIDENT' ? 'President' : 'Resident'}
-                        </span>
-                      )}
+                      <span
+                        className={`text-[10px] px-2 py-0.5 rounded-md font-semibold ${
+                          userRole === 'PRESIDENT'
+                            ? 'bg-[#B87333]/15 text-[#E5A96A] border border-[#B87333]/30'
+                            : 'bg-[#1E1E1E] text-[#A0A0A0] border border-[#2E2E2E]'
+                        }`}
+                      >
+                        {roleLabel}
+                      </span>
                     </div>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                    <span className="text-[10px] text-[#737373]">
                       {comment.createdAt ? formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true }) : 'Just now'}
                     </span>
                   </div>
-                  <div className="text-gray-700 dark:text-gray-300 text-sm whitespace-pre-wrap">
+                  <div className="text-xs sm:text-sm text-[#A0A0A0] whitespace-pre-wrap leading-relaxed">
                     {comment.body || comment.content}
                   </div>
                 </div>
@@ -118,34 +116,37 @@ const CommentThread = ({ ticketId }) => {
           })}
         </div>
       ) : (
-        <div className="p-4 text-center text-gray-500 dark:text-gray-400">No comments yet. Be the first to verify or add info!</div>
+        <div className="p-6 text-center text-xs text-[#737373]">
+          No comments yet. Be the first to share an update!
+        </div>
       )}
 
-      {/* Comment form */}
+      {/* Comment form with glassy button */}
       {user && (
-        <form onSubmit={handleSubmit} className="p-4 border-t border-gray-200 dark:border-gray-700">
+        <form onSubmit={handleSubmit} className="p-3 sm:p-4 border-t border-[#222222] bg-[#171717]/40">
           <div className="flex gap-3">
             <img
               src={
-                user.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}`
+                user.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=222222&color=F5F2ED`
               }
               alt={user.name}
-              className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+              className="w-8 h-8 rounded-full object-cover shrink-0 border border-[#2E2E2E]"
             />
             <div className="flex-1 relative">
               <textarea
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Add a comment..."
-                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                placeholder="Add a comment or update..."
+                className="w-full border border-[#262626] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-[#F5F2ED] bg-[#141414] focus:outline-none focus:border-[#B87333]/60 resize-none pr-12"
                 rows={2}
               />
               <button
                 type="submit"
                 disabled={!newComment.trim()}
-                className="absolute bottom-2 right-2 p-1.5 rounded-full bg-blue-500 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors"
+                className="absolute bottom-3 right-3 p-2 rounded-lg bg-[#B87333]/25 hover:bg-[#B87333]/35 text-[#F5F2ED] border border-[#B87333]/50 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer"
+                title="Post Comment"
               >
-                <Send size={16} />
+                <Send size={14} className="text-[#E5A96A]" />
               </button>
             </div>
           </div>

@@ -30,9 +30,9 @@ function Layout({ children }) {
   const isAuthPage = ["/", "/signup"].includes(location.pathname);
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white">
+    <div className="min-h-dvh bg-[#F7F5F0] dark:bg-[#080808] text-[#1A1A1A] dark:text-[#F5F2ED] transition-colors duration-200 antialiased">
       {!isAuthPage && <Sidebar />}
-      <div className={!isAuthPage ? "lg:pl-64 flex flex-col min-h-screen" : "min-h-screen"}>
+      <div className={!isAuthPage ? "lg:pl-64 flex flex-col min-h-dvh" : "min-h-dvh"}>
         {!isAuthPage && <Navbar />}
         <main className="flex-1">{children}</main>
       </div>

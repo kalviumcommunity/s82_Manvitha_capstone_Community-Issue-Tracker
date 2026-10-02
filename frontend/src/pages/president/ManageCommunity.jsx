@@ -4,6 +4,7 @@ import axios from 'axios';
 import { Search, ShieldAlert, UserCheck, Loader2, AlertTriangle, Phone, UserPlus, Check, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
+import PartyPopperCelebration from '../../components/common/PartyPopperCelebration';
 
 const api = axios.create({
     baseURL: 'https://s82-manvitha-capstone-community-issue-ojxt.onrender.com/api/v1',
@@ -21,10 +22,11 @@ const ManageCommunity = () => {
     const [loading, setLoading] = useState(true);
     const [approvalsLoading, setApprovalsLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
-    const [showConfirm, setShowConfirm] = useState(null); // ID of user to confirm
+    const [showConfirm, setShowConfirm] = useState(null);
     const [transferring, setTransferring] = useState(false);
-    const [activeTab, setActiveTab] = useState(location.state?.tab || 'residents'); // 'residents' or 'approvals'
+    const [activeTab, setActiveTab] = useState(location.state?.tab || 'residents');
     const [decisionLoadingId, setDecisionLoadingId] = useState(null);
+    const [celebrationMember, setCelebrationMember] = useState(null);
 
     useEffect(() => {
         if (user) {
@@ -40,8 +42,8 @@ const ManageCommunity = () => {
             const res = await api.get(`/communities/${user.communityId}/residents`);
             setResidents(res.data);
         } catch (err) {
-            console.error("Error fetching residents:", err);
-            addNotification({ title: 'Error', message: 'Failed to load residents', type: 'error' });
+            console.error("Error fetching users:", err);
+            addNotification({ title: 'Error', message: 'Failed to load community users', type: 'error' });
         } finally {
             setLoading(false);
         }
@@ -66,9 +68,7 @@ const ManageCommunity = () => {
             setTransferring(true);
             await api.post('/communities/transfer-ownership', { newPresidentId: targetUserId });
 
-            addNotification({ title: 'Success', message: 'Presidency transferred. You are now a resident.' });
-
-            // Force reload to refresh permissions
+            addNotification({ title: 'Success', message: 'Admin role transferred. You are now a standard user.' });
             window.location.reload();
 
         } catch (err) {
@@ -79,16 +79,24 @@ const ManageCommunity = () => {
         }
     };
 
-    const handleDecision = async (approvalId, decision) => {
+    const handleDecision = async (approvalId, decision, requesterName = '') => {
         try {
             setDecisionLoadingId(approvalId);
             await api.post(`/approvals/${approvalId}/decision`, { decision });
-            addNotification({ 
-                title: 'Success', 
-                message: `Join request was successfully ${decision === 'APPROVED' ? 'approved' : 'rejected'}.` 
-            });
             
-            // Refresh tables
+            if (decision === 'APPROVED') {
+                setCelebrationMember({
+                    name: requesterName,
+                    communityName: user?.communityName || 'the community'
+                });
+            } else {
+                addNotification({ 
+                    title: 'Request Declined', 
+                    message: `Join request for ${requesterName || 'user'} was declined.`,
+                    type: 'info'
+                });
+            }
+            
             fetchPendingApprovals();
             if (decision === 'APPROVED') {
                 fetchResidents();
@@ -106,14 +114,14 @@ const ManageCommunity = () => {
     };
 
     const handleRemoveResident = async (residentId) => {
-        if (!window.confirm("Are you sure you want to remove this resident from the community? They will lose access to all community announcements, tickets, and features.")) return;
+        if (!window.confirm("Are you sure you want to remove this user from the community? They will lose access to all community announcements, tickets, and features.")) return;
         try {
             await api.delete(`/communities/${user.communityId}/residents/${residentId}`);
-            addNotification({ title: 'Success', message: 'Resident removed from community successfully.' });
+            addNotification({ title: 'Success', message: 'User removed from community successfully.' });
             fetchResidents();
         } catch (err) {
-            console.error("Failed to remove resident:", err);
-            addNotification({ title: 'Error', message: err.response?.data?.message || 'Failed to remove resident', type: 'error' });
+            console.error("Failed to remove user:", err);
+            addNotification({ title: 'Error', message: err.response?.data?.message || 'Failed to remove user', type: 'error' });
         }
     };
 
@@ -131,94 +139,97 @@ const ManageCommunity = () => {
     });
 
     return (
-        <div className="p-4 lg:p-6 max-w-5xl mx-auto">
-            <div className="mb-6">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                    <ShieldAlert className="text-blue-600" />
+        <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto space-y-6">
+            {/* Header */}
+            <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-[#1A1A1A] dark:text-[#F5F2ED] flex items-center gap-2.5 font-serif">
+                    <ShieldAlert className="text-[#B87333]" size={28} />
                     Manage Community
                 </h1>
-                <p className="text-gray-500 dark:text-gray-400 mt-2">
-                    View active residents, manage community leadership, and moderate joining requests.
+                <p className="text-xs sm:text-sm text-[#666666] dark:text-[#888888] mt-1.5">
+                    View active community members, manage administrative roles, and approve joining requests.
                 </p>
             </div>
 
             {/* Tabs */}
-            <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6">
+            <div className="flex border-b border-[#E5E0D8] dark:border-[#222222]">
                 <button
                     onClick={() => setActiveTab('residents')}
-                    className={`py-3 px-6 font-semibold border-b-2 transition-all flex items-center gap-2 cursor-pointer ${
+                    className={`py-3 px-5 font-semibold text-xs sm:text-sm border-b-2 transition-all flex items-center gap-2 cursor-pointer ${
                         activeTab === 'residents'
-                            ? 'border-blue-600 text-blue-600 dark:text-blue-450 dark:border-blue-450'
-                            : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                            ? 'border-[#B87333] text-[#B87333] dark:text-[#F5F2ED]'
+                            : 'border-transparent text-[#777777] dark:text-[#737373] hover:text-[#1A1A1A] dark:hover:text-[#D4D4D4]'
                     }`}
                 >
-                    <UserCheck size={18} />
-                    Active Residents ({residents.length})
+                    <UserCheck size={16} />
+                    Active Users ({residents.length})
                 </button>
                 <button
                     onClick={() => setActiveTab('approvals')}
-                    className={`py-3 px-6 font-semibold border-b-2 transition-all flex items-center gap-2 cursor-pointer relative ${
+                    className={`py-3 px-5 font-semibold text-xs sm:text-sm border-b-2 transition-all flex items-center gap-2 cursor-pointer relative ${
                         activeTab === 'approvals'
-                            ? 'border-blue-600 text-blue-600 dark:text-blue-450 dark:border-blue-450'
-                            : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                            ? 'border-[#B87333] text-[#B87333] dark:text-[#F5F2ED]'
+                            : 'border-transparent text-[#777777] dark:text-[#737373] hover:text-[#1A1A1A] dark:hover:text-[#D4D4D4]'
                     }`}
                 >
-                    <UserPlus size={18} />
+                    <UserPlus size={16} />
                     Pending Join Requests
                     {pendingApprovals.length > 0 && (
-                        <span className="ml-1.5 px-2 py-0.5 text-xs bg-amber-500 text-white rounded-full font-bold animate-pulse">
+                        <span className="ml-1.5 px-2 py-0.5 text-[10px] bg-[#B87333] text-white dark:text-[#080808] rounded-full font-bold animate-pulse">
                             {pendingApprovals.length}
                         </span>
                     )}
                 </button>
             </div>
 
-            {/* Search */}
-            <div className="relative mb-6">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            {/* Search Input with Copper Focus Border */}
+            <div className="relative">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#888888] dark:text-[#737373]" size={18} />
                 <input
                     type="text"
                     placeholder={
                         activeTab === 'residents' 
-                            ? "Search residents by name or email..." 
+                            ? "Search users by name or email..." 
                             : "Search pending requests by name or email..."
                     }
-                    className="w-full pl-10 pr-4 py-2.5 border rounded-xl dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-sm"
+                    className="w-full pl-10 pr-4 py-2.5 border rounded-xl bg-white dark:bg-[#121212]/80 border-[#D5CEC2] dark:border-[#262626] text-[#1A1A1A] dark:text-[#F5F2ED] focus:border-[#B87333] outline-none text-xs sm:text-sm"
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
                 />
             </div>
 
             {activeTab === 'residents' ? (
-                /* Residents List */
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow border dark:border-gray-700 overflow-hidden">
-                    <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-                        <h2 className="font-semibold text-gray-700 dark:text-gray-200">Residents ({filteredResidents.length})</h2>
+                /* Active Users List */
+                <div className="bg-white/95 dark:bg-[#121212]/90 rounded-2xl border border-[#E5E0D8] dark:border-[#222222] overflow-hidden backdrop-blur-md">
+                    <div className="p-4 border-b border-[#E5E0D8] dark:border-[#222222] bg-[#FAF7F2] dark:bg-[#171717]/50">
+                        <h2 className="font-semibold text-xs text-[#1A1A1A] dark:text-[#F5F2ED] uppercase tracking-wider">
+                            Active Users ({filteredResidents.length})
+                        </h2>
                     </div>
 
-                    <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                    <div className="divide-y divide-[#EAE5DD] dark:divide-[#1F1F1F]">
                         {loading ? (
-                            <div className="p-10 text-center"><Loader2 className="animate-spin mx-auto text-blue-500" /></div>
+                            <div className="p-10 text-center"><Loader2 className="animate-spin mx-auto text-[#B87333]" /></div>
                         ) : filteredResidents.length > 0 ? (
                             filteredResidents.map(resident => (
-                                <div key={resident._id} className="p-4 flex items-center justify-between hover:bg-gray-55 dark:hover:bg-gray-700/50 transition-colors">
+                                <div key={resident._id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-[#FAF7F2] dark:hover:bg-[#171717]/40 transition-colors">
                                     <div className="flex items-center gap-3">
                                         <img
-                                            src={resident.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(resident.name)}`}
+                                            src={resident.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(resident.name)}&background=1E1E1E&color=E5A96A`}
                                             alt={resident.name}
-                                            className="w-10 h-10 rounded-full bg-gray-200"
+                                            className="w-10 h-10 rounded-full bg-gray-100 dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E]"
                                         />
                                         <div>
-                                            <h3 className="font-medium text-gray-900 dark:text-white">{resident.name}</h3>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400">{resident.email}</p>
+                                            <h3 className="font-medium text-sm text-[#1A1A1A] dark:text-[#F5F2ED]">{resident.name}</h3>
+                                            <p className="text-xs text-[#777777] dark:text-[#737373]">{resident.email}</p>
                                             <div className="flex flex-wrap gap-2 mt-1">
                                                 {resident.phoneNumber && (
-                                                    <span className="text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                                    <span className="text-[11px] bg-[#B87333]/15 text-[#8B4513] dark:text-[#E5A96A] border border-[#B87333]/25 px-2 py-0.5 rounded-md flex items-center gap-1">
                                                         <Phone size={10} /> {resident.phoneNumber}
                                                     </span>
                                                 )}
                                                 {resident.profile?.houseNo && (
-                                                    <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full">
+                                                    <span className="text-[11px] bg-gray-100 dark:bg-[#1E1E1E] text-gray-700 dark:text-[#A0A0A0] border border-gray-200 dark:border-[#292929] px-2 py-0.5 rounded-md">
                                                         {resident.profile.houseNo} {resident.profile.block ? `- ${resident.profile.block}` : ''}
                                                     </span>
                                                 )}
@@ -226,16 +237,17 @@ const ManageCommunity = () => {
                                         </div>
                                     </div>
 
-                                    <div className="flex gap-2">
+                                    {/* Action buttons with copper border */}
+                                    <div className="flex gap-2 self-end sm:self-center">
                                         <button
                                             onClick={() => setShowConfirm(resident._id)}
-                                            className="px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors border border-transparent hover:border-blue-200 cursor-pointer"
+                                            className="px-3 py-1.5 text-xs font-semibold text-[#8B4513] dark:text-[#E5A96A] bg-[#B87333]/15 hover:bg-[#B87333]/25 dark:bg-[#1A1A1A] hover:dark:bg-[#222222] border border-[#B87333]/50 hover:border-[#B87333] rounded-xl transition-all duration-200 cursor-pointer backdrop-blur-md"
                                         >
-                                            Make President
+                                            Make Admin
                                         </button>
                                         <button
                                             onClick={() => handleRemoveResident(resident._id)}
-                                            className="px-3 py-1.5 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors border border-transparent hover:border-red-205 cursor-pointer"
+                                            className="px-3 py-1.5 text-xs font-semibold text-[#777777] dark:text-[#737373] hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 border border-transparent hover:border-rose-300 dark:hover:border-rose-500/30 rounded-xl transition-all duration-200 cursor-pointer backdrop-blur-md"
                                         >
                                             Remove
                                         </button>
@@ -243,78 +255,81 @@ const ManageCommunity = () => {
                                 </div>
                             ))
                         ) : (
-                            <div className="p-8 text-center text-gray-500">
-                                No residents found matching your search.
+                            <div className="p-8 text-center text-xs text-[#777777] dark:text-[#737373]">
+                                No users found matching your search.
                             </div>
                         )}
                     </div>
                 </div>
             ) : (
                 /* Pending Join Requests List */
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow border dark:border-gray-700 overflow-hidden">
-                    <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-                        <h2 className="font-semibold text-gray-700 dark:text-gray-200">Pending Requests ({filteredPending.length})</h2>
+                <div className="bg-white/95 dark:bg-[#121212]/90 rounded-2xl border border-[#E5E0D8] dark:border-[#222222] overflow-hidden backdrop-blur-md">
+                    <div className="p-4 border-b border-[#E5E0D8] dark:border-[#222222] bg-[#FAF7F2] dark:bg-[#171717]/50">
+                        <h2 className="font-semibold text-xs text-[#1A1A1A] dark:text-[#F5F2ED] uppercase tracking-wider">
+                            Pending Requests ({filteredPending.length})
+                        </h2>
                     </div>
 
-                    <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                    <div className="divide-y divide-[#EAE5DD] dark:divide-[#1F1F1F]">
                         {approvalsLoading ? (
-                            <div className="p-10 text-center"><Loader2 className="animate-spin mx-auto text-blue-500" /></div>
+                            <div className="p-10 text-center"><Loader2 className="animate-spin mx-auto text-[#B87333]" /></div>
                         ) : filteredPending.length > 0 ? (
                             filteredPending.map(approval => {
                                 const requester = approval.requesterId;
                                 if (!requester) return null;
                                 return (
-                                    <div key={approval._id} className="p-4 flex items-center justify-between hover:bg-gray-55 dark:hover:bg-gray-700/50 transition-colors animate-in fade-in slide-in-from-bottom-2 duration-200">
+                                    <div key={approval._id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-[#FAF7F2] dark:hover:bg-[#171717]/40 transition-colors">
                                         <div className="flex items-center gap-3">
                                             <img
-                                                src={requester.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(requester.name)}`}
+                                                src={requester.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(requester.name)}&background=1E1E1E&color=E5A96A`}
                                                 alt={requester.name}
-                                                className="w-10 h-10 rounded-full bg-gray-200"
+                                                className="w-10 h-10 rounded-full bg-gray-100 dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2E2E2E]"
                                             />
                                             <div>
-                                                <h3 className="font-medium text-gray-900 dark:text-white">{requester.name}</h3>
-                                                <p className="text-sm text-gray-500 dark:text-gray-400">{requester.email}</p>
+                                                <h3 className="font-medium text-sm text-[#1A1A1A] dark:text-[#F5F2ED]">{requester.name}</h3>
+                                                <p className="text-xs text-[#777777] dark:text-[#737373]">{requester.email}</p>
                                                 <div className="flex flex-wrap gap-2 mt-1">
                                                     {requester.phoneNumber && (
-                                                        <span className="text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                                        <span className="text-[11px] bg-[#B87333]/15 text-[#8B4513] dark:text-[#E5A96A] border border-[#B87333]/25 px-2 py-0.5 rounded-md flex items-center gap-1">
                                                             <Phone size={10} /> {requester.phoneNumber}
                                                         </span>
                                                     )}
                                                     {requester.profile?.houseNo && (
-                                                        <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full">
+                                                        <span className="text-[11px] bg-gray-100 dark:bg-[#1E1E1E] text-gray-700 dark:text-[#A0A0A0] border border-gray-200 dark:border-[#292929] px-2 py-0.5 rounded-md">
                                                             House No: {requester.profile.houseNo}
                                                         </span>
                                                     )}
-                                                    <span className="text-xs bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full">
+                                                    <span className="text-[11px] bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-md">
                                                         Requested: {new Date(approval.createdAt).toLocaleDateString()}
                                                     </span>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-2">
+                                        {/* Action buttons */}
+                                        <div className="flex items-center gap-2 self-end sm:self-center">
                                             <button
                                                 disabled={decisionLoadingId !== null}
-                                                onClick={() => handleDecision(approval._id, 'APPROVED')}
-                                                className="p-1.5 text-sm bg-green-50 hover:bg-green-100 text-green-600 hover:text-green-700 dark:bg-green-950/20 dark:hover:bg-green-950/40 rounded-lg transition-colors border border-green-200 dark:border-green-800 flex items-center gap-1 cursor-pointer font-medium"
+                                                onClick={() => handleDecision(approval._id, 'APPROVED', requester.name)}
+                                                className="px-3.5 py-1.5 text-xs font-semibold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-600 dark:text-emerald-400 border border-emerald-500/35 rounded-xl transition-all duration-200 flex items-center gap-1.5 cursor-pointer backdrop-blur-md"
                                             >
-                                                {decisionLoadingId === approval._id ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                                                {decisionLoadingId === approval._id ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
                                                 Approve
                                             </button>
                                             <button
                                                 disabled={decisionLoadingId !== null}
-                                                onClick={() => handleDecision(approval._id, 'REJECTED')}
-                                                className="p-1.5 text-sm bg-red-50 hover:bg-red-100 text-red-650 hover:text-red-700 dark:bg-red-950/20 dark:hover:bg-red-955/40 rounded-lg transition-colors border border-red-200 dark:border-red-800 flex items-center gap-1 cursor-pointer font-medium"
+                                                onClick={() => handleDecision(approval._id, 'REJECTED', requester.name)}
+                                                className="px-3.5 py-1.5 text-xs font-semibold bg-rose-500/15 hover:bg-rose-500/25 text-rose-600 dark:text-rose-400 border border-rose-500/35 rounded-xl transition-all duration-200 flex items-center gap-1.5 cursor-pointer backdrop-blur-md"
                                             >
-                                                {decisionLoadingId === approval._id ? <Loader2 size={16} className="animate-spin" /> : <X size={16} />}
-                                                Reject
+                                                {decisionLoadingId === approval._id ? <Loader2 size={14} className="animate-spin" /> : <X size={14} />}
+                                                Decline
                                             </button>
                                         </div>
                                     </div>
                                 );
                             })
                         ) : (
-                            <div className="p-8 text-center text-gray-500">
+                            <div className="p-8 text-center text-xs text-[#777777] dark:text-[#737373]">
                                 No pending join requests.
                             </div>
                         )}
@@ -322,23 +337,23 @@ const ManageCommunity = () => {
                 </div>
             )}
 
-            {/* Confirmation Modal */}
+            {/* Transfer Admin Rights Confirmation Modal */}
             {showConfirm && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-md w-full p-6 border-t-4 border-red-500 animate-in fade-in zoom-in duration-200">
-                        <div className="flex items-center gap-3 text-red-600 mb-4">
-                            <AlertTriangle size={28} />
-                            <h2 className="text-xl font-bold">Transfer Presidency?</h2>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+                    <div className="bg-white dark:bg-[#121212]/95 border border-[#E5E0D8] dark:border-[#262626] rounded-3xl max-w-md w-full p-6 text-[#1A1A1A] dark:text-[#F5F2ED] backdrop-blur-2xl">
+                        <div className="flex items-center gap-3 text-amber-500 mb-4">
+                            <AlertTriangle size={26} />
+                            <h2 className="text-lg font-bold font-serif">Transfer Admin Rights?</h2>
                         </div>
 
-                        <p className="text-gray-600 dark:text-gray-300 mb-4">
-                            Are you sure you want to transfer the role of <strong>President</strong> to this resident?
+                        <p className="text-xs sm:text-sm text-[#666666] dark:text-[#A0A0A0] mb-4">
+                            Are you sure you want to transfer Admin rights to this user?
                         </p>
 
-                        <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-100 dark:border-red-900/50 mb-6">
-                            <ul className="text-sm text-red-800 dark:text-red-200 space-y-2 list-disc list-inside">
-                                <li>You will immediately become a <strong>Resident</strong>.</li>
-                                <li>You will lose all admin privileges (managing issues, announcements, etc).</li>
+                        <div className="bg-amber-500/10 p-4 rounded-xl border border-amber-500/20 mb-6">
+                            <ul className="text-xs text-amber-700 dark:text-amber-300/90 space-y-1.5 list-disc list-inside">
+                                <li>You will immediately become a <strong>standard User</strong>.</li>
+                                <li>You will lose all admin privileges (managing members, community settings).</li>
                                 <li>This action <strong>cannot be undone</strong> by you.</li>
                             </ul>
                         </div>
@@ -347,21 +362,30 @@ const ManageCommunity = () => {
                             <button
                                 onClick={() => setShowConfirm(null)}
                                 disabled={transferring}
-                                className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors font-medium cursor-pointer"
+                                className="px-4 py-2 text-xs font-semibold text-[#666666] dark:text-[#A0A0A0] hover:text-[#1A1A1A] dark:hover:text-[#F5F2ED] bg-gray-100 dark:bg-[#1A1A1A] hover:bg-gray-200 dark:hover:bg-[#222222] border border-[#D5CEC2] dark:border-[#292929] rounded-xl transition-all duration-200 cursor-pointer backdrop-blur-md"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={() => handleTransfer(showConfirm)}
                                 disabled={transferring}
-                                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg shadow-lg shadow-red-500/30 transition-all font-bold flex items-center gap-2 cursor-pointer"
+                                className="px-4 py-2 text-xs font-semibold bg-rose-500/20 hover:bg-rose-500/30 text-rose-600 dark:text-rose-300 border border-rose-500/40 rounded-xl transition-all duration-200 flex items-center gap-2 cursor-pointer backdrop-blur-md"
                             >
-                                {transferring ? <Loader2 className="animate-spin" size={18} /> : <UserCheck size={18} />}
+                                {transferring ? <Loader2 className="animate-spin" size={16} /> : <UserCheck size={16} />}
                                 Confirm Transfer
                             </button>
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Celebration Party Popper Pop-up on Member Approval */}
+            {celebrationMember && (
+                <PartyPopperCelebration
+                    memberName={celebrationMember.name}
+                    communityName={celebrationMember.communityName}
+                    onClose={() => setCelebrationMember(null)}
+                />
             )}
         </div>
     );
