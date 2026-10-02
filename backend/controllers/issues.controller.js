@@ -11,7 +11,12 @@ const ALLOWED_PRIORITY = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 // Create Issue
 // --------------------
 exports.create = asyncHandler(async (req, res) => {
-  const { title, description, category, priority, photos } = req.body;
+  const { title, description, category, priority } = req.body;
+  let photos = req.body.photos ? (Array.isArray(req.body.photos) ? req.body.photos : [req.body.photos]) : [];
+
+  if (req.file) {
+    photos.push('/uploads/' + req.file.filename);
+  }
 
   const issue = await Issue.create({
     title,
@@ -105,7 +110,12 @@ exports.update = asyncHandler(async (req, res) => {
     return res.status(403).json({ message: 'Forbidden' });
   }
 
-  const { title, description, category, priority, photos } = req.body;
+  const { title, description, category, priority } = req.body;
+  let photos = req.body.photos ? (Array.isArray(req.body.photos) ? req.body.photos : [req.body.photos]) : issue.photos;
+
+  if (req.file) {
+    photos.push('/uploads/' + req.file.filename);
+  }
 
   Object.assign(issue, {
     title,

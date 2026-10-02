@@ -22,7 +22,7 @@ const priorityConfig = {
 };
 
 const api = axios.create({
-    baseURL: 'https://s82-manvitha-capstone-community-issue-ojxt.onrender.com/api/v1',
+    baseURL: 'http://localhost:3551/api/v1',
     withCredentials: true,
 });
 
@@ -183,10 +183,10 @@ const TicketDetail = () => {
                                     {ticket.photos.map((photo, index) => (
                                         <div key={index} className="aspect-square rounded-xl overflow-hidden border border-[#E5E0D8] dark:border-[#262626] bg-[#F2EDE3] dark:bg-[#141414]">
                                             <img
-                                                src={photo}
+                                                src={photo.startsWith('/uploads') ? `http://localhost:3551${photo}` : photo}
                                                 alt={`Attachment ${index + 1}`}
                                                 className="w-full h-full object-cover hover:scale-105 transition-transform cursor-pointer"
-                                                onClick={() => window.open(photo, '_blank')}
+                                                onClick={() => window.open(photo.startsWith('/uploads') ? `http://localhost:3551${photo}` : photo, '_blank')}
                                             />
                                         </div>
                                     ))}
