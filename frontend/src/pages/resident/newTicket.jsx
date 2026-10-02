@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Send, ArrowLeft, Loader2, Sparkles } from 'lucide-react';
+import { Send, ArrowLeft, Loader2, Sparkles, ImagePlus, X } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://s82-manvitha-capstone-community-issue-ojxt.onrender.com/api/v1',
+  baseURL: 'http://localhost:3551/api/v1',
   withCredentials: true,
 });
 
@@ -25,6 +25,34 @@ const NewTicket = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingSuggestion, setLoadingSuggestion] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState([]);
+  
+  const [photo, setPhoto] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setFormErrors((prev) => ({ ...prev, photo: 'File size must be less than 5MB' }));
+        return;
+      }
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+      if (!allowedTypes.includes(file.type)) {
+        setFormErrors((prev) => ({ ...prev, photo: 'Only JPG, PNG and WEBP are allowed' }));
+        return;
+      }
+      setPhoto(file);
+      setPhotoPreview(URL.createObjectURL(file));
+      setFormErrors((prev) => ({ ...prev, photo: '' }));
+    }
+  };
+
+  const removePhoto = () => {
+    setPhoto(null);
+    setPhotoPreview(null);
+    const fileInput = document.getElementById('photo-upload');
+    if (fileInput) fileInput.value = '';
+  };
 
   useEffect(() => {
     if (ticketToEdit) {
@@ -114,15 +142,27 @@ const NewTicket = () => {
     setIsSubmitting(true);
 
     try {
+      let payload;
+      let headers = {};
+      if (photo) {
+        payload = new FormData();
+        payload.append('title', formData.title);
+        payload.append('description', formData.description);
+        payload.append('category', formData.category);
+        payload.append('photo', photo);
+      } else {
+        payload = formData;
+      }
+
       if (ticketToEdit?._id) {
-        await api.put(`/issues/${ticketToEdit._id}`, formData);
+        await api.put(`/issues/${ticketToEdit._id}`, payload, { headers });
         addNotification({
           title: 'Ticket Updated',
           message: `Your ticket "${formData.title}" has been updated.`,
           type: 'ticket',
         });
       } else {
-        await api.post('/issues', formData);
+        await api.post('/issues', payload, { headers });
         addNotification({
           title: 'Ticket Created',
           message: `Your ticket "${formData.title}" is now open.`,
@@ -290,6 +330,57 @@ const NewTicket = () => {
               }`}
             />
             {formErrors.description && <p className="mt-1.5 text-xs text-rose-500">{formErrors.description}</p>}
+          </div>
+
+          {/* Photo Upload */}
+          <div>
+            <label className="block text-xs font-semibold text-[#777777] dark:text-[#A0A0A0] uppercase tracking-wider mb-2">
+              Add a Photo
+            </label>
+            <div className={`w-full p-4 rounded-xl border border-dashed transition-all ${
+              formErrors.photo ? 'border-rose-500 bg-rose-500/5' : 'border-[#D5CEC2] dark:border-[#292929] bg-[#FAF7F2]/50 dark:bg-[#171717]/50 hover:bg-[#FAF7F2] dark:hover:bg-[#171717]'
+            }`}>
+              {!photoPreview ? (
+                <div className="flex flex-col items-center justify-center text-center">
+                  <ImagePlus size={24} className="text-[#B87333] mb-2" />
+                  <p className="text-xs sm:text-sm text-[#1A1A1A] dark:text-[#F5F2ED] font-medium">Upload a photo of the issue to help us understand it better</p>
+                  <p className="text-[10px] text-[#888888] dark:text-[#737373] mt-1 mb-3">JPG, PNG or WEBP (Max 5MB)</p>
+                  <label className="cursor-pointer px-4 py-1.5 rounded-lg bg-[#E5E0D8] dark:bg-[#222222] hover:bg-[#D5CEC2] dark:hover:bg-[#2A2A2A] text-xs font-semibold text-[#1A1A1A] dark:text-[#F5F2ED] transition-colors">
+                    Choose Photo
+                    <input 
+                      id="photo-upload"
+                      type="file" 
+                      accept="image/jpeg, image/png, image/webp" 
+                      onChange={handleFileChange}
+                      className="hidden" 
+                    />
+                  </label>
+                </div>
+              ) : (
+                <div className="relative flex items-center gap-4">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border border-[#D5CEC2] dark:border-[#292929] shrink-0">
+                    <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs sm:text-sm text-[#1A1A1A] dark:text-[#F5F2ED] font-medium truncate">
+                      {photo.name}
+                    </p>
+                    <p className="text-[10px] text-[#888888] dark:text-[#737373]">
+                      {(photo.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={removePhoto}
+                    className="p-1.5 rounded-full hover:bg-rose-500/10 text-rose-500 transition-colors cursor-pointer"
+                    title="Remove photo"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              )}
+            </div>
+            {formErrors.photo && <p className="mt-1.5 text-xs text-rose-500">{formErrors.photo}</p>}
           </div>
 
           {/* Submit Button with Crisp Copper Border */}

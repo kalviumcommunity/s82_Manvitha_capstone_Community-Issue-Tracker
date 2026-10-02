@@ -8,9 +8,13 @@ const cookieParser = require('cookie-parser');
 
 const connectDB = require('./config/db');
 
+const path = require('path');
+
 const app = express();
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser()); // ✅ add this before routes
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Remove any other app.use(cors(...)) lines
 const allowedOrigins = [
@@ -63,6 +67,14 @@ app.use('/api/v1', require('./routes/ai.routes'));
 // Global error handler (last)
 app.use((err, req, res, next) => {
   console.error('❌ Error:', err);
+
+  // Handle Multer errors
+  if (err instanceof require('multer').MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ message: 'File is too large. Max size is 5MB.' });
+    }
+    return res.status(400).json({ message: err.message });
+  }
 
   // Handle Mongoose Validation Error
   if (err.name === 'ValidationError') {

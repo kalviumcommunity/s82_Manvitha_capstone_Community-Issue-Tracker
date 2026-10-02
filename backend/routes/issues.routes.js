@@ -2,11 +2,17 @@ const router = require('express').Router();
 const auth = require('../middlewares/auth');
 const rbac = require('../middlewares/rbac');
 const c = require('../controllers/issues.controller');
+const upload = require('../utils/upload');
 
 router.use(auth);
 
 // Any logged-in user
-router.post('/', c.create);
+router.post('/', upload.single('photo'), (req, res, next) => {
+    if (req.fileValidationError) {
+      return res.status(400).json({ message: req.fileValidationError });
+    }
+    next();
+}, c.create);
 router.get('/', rbac('PRESIDENT'), c.list);
 router.get('/my', c.my);
 router.get('/:id', c.one);
@@ -15,7 +21,12 @@ router.get('/:id/comments', c.comments);
 router.post('/:id/rating', c.rating);
 
 // Creator or Admin actions
-router.put('/:id', c.update);
+router.put('/:id', upload.single('photo'), (req, res, next) => {
+    if (req.fileValidationError) {
+      return res.status(400).json({ message: req.fileValidationError });
+    }
+    next();
+}, c.update);
 router.delete('/:id', c.remove);
 
 // Admin-only actions
